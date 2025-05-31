@@ -3,30 +3,80 @@ import Link from 'next/link'
 import * as Yup from 'yup'
 import axios, { AxiosError } from 'axios'
 import { ErrorMessage, Field, Form, Formik, FormikHelpers } from 'formik'
+import { useEffect, useState } from 'react'
 
 import { useAuth } from '@/hooks/auth'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import AuthCard from '@/components/AuthCard'
+
+interface Department {
+  id: number
+  name: string
+}
 
 interface Values {
   name: string
   email: string
   password: string
   password_confirmation: string
+  role: string
+  position: string
+  department_id: string
 }
 
+// Define the position options
+const POSITION_OPTIONS = [
+  'DIREKTUR',
+  'GENERAL MANAGER',
+  'GENERAL DIREKSI',
+  'MANAGER',
+  'HRD',
+  'FINANCE',
+  'DEPARTMENT',
+  'STAFF',
+  'PEMIMPIN'
+]
+
 const RegisterPage = () => {
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+
   const { register } = useAuth({
     middleware: 'guest',
     redirectIfAuthenticated: '/dashboard',
   })
+
+  // Fetch departments from API
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setLoading(true)
+        const response = await axios.get('http://localhost:8000/api/departments')
+        setDepartments(response.data)
+        setError(null)
+      } catch (err) {
+        setError('Failed to load departments. Please try again later.')
+        console.error('Error fetching departments:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDepartments()
+  }, [])
 
   const submitForm = async (
     values: Values,
     { setSubmitting, setErrors }: FormikHelpers<Values>,
   ): Promise<any> => {
     try {
-      await register(values)
+      // Convert department_id to number or null
+      const formData = {
+        ...values,
+        department_id: values.department_id ? parseInt(values.department_id) : null,
+      }
+      await register(formData)
     } catch (error: Error | AxiosError | any) {
       if (axios.isAxiosError(error) && error.response?.status === 422) {
         setErrors(error.response?.data?.errors)
@@ -45,6 +95,9 @@ const RegisterPage = () => {
     password_confirmation: Yup.string()
       .required('Please confirm password.')
       .oneOf([Yup.ref('password')], 'Your passwords do not match.'),
+    role: Yup.string().required('The role field is required.'),
+    position: Yup.string().required('The position field is required.'),
+    department_id: Yup.string().nullable(),
   })
 
   return (
@@ -62,6 +115,9 @@ const RegisterPage = () => {
           email: '',
           password: '',
           password_confirmation: '',
+          role: 'employee', // Default role
+          position: '', // Empty default, will show "Select a position" option
+          department_id: '',
         }}>
         <Form className="space-y-4">
           <div>
@@ -105,6 +161,94 @@ const RegisterPage = () => {
             />
           </div>
 
+          <div>
+            <label
+              htmlFor="role"
+              className="undefined block font-medium text-sm text-gray-700">
+              Role
+            </label>
+
+            <Field
+              as="select"
+              id="role"
+              name="role"
+              className="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            >
+              <option value="employee">Employee</option>
+              <option value="admin">Admin</option>
+            </Field>
+
+            <ErrorMessage
+              name="role"
+              component="span"
+              className="text-xs text-red-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="position"
+              className="undefined block font-medium text-sm text-gray-700">
+              Position
+            </label>
+
+            <Field
+              as="select"
+              id="position"
+              name="position"
+              className="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+            >
+              <option value="">Select a position</option>
+              {POSITION_OPTIONS.map((position) => (
+                <option key={position} value={position}>
+                  {position}
+                </option>
+              ))}
+            </Field>
+
+            <ErrorMessage
+              name="position"
+              component="span"
+              className="text-xs text-red-500"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="department_id"
+              className="undefined block font-medium text-sm text-gray-700">
+              Department
+            </label>
+
+            <Field
+              as="select"
+              id="department_id"
+              name="department_id"
+              className="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              disabled={loading}
+            >
+              <option value="">Select a department</option>
+              {departments.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.name}
+                </option>
+              ))}
+            </Field>
+
+            {loading && (
+              <span className="text-xs text-gray-500">Loading departments...</span>
+            )}
+            {error && (
+              <span className="text-xs text-red-500">{error}</span>
+            )}
+
+            <ErrorMessage
+              name="department_id"
+              component="span"
+              className="text-xs text-red-500"
+            />
+          </div>
+
           <div className="">
             <label
               htmlFor="password"
@@ -128,7 +272,7 @@ const RegisterPage = () => {
 
           <div className="">
             <label
-              htmlFor="password"
+              htmlFor="password_confirmation"
               className="undefined block font-medium text-sm text-gray-700">
               Confirm Password
             </label>

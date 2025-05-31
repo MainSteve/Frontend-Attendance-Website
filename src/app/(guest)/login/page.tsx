@@ -1,24 +1,22 @@
 'use client'
 import Link from 'next/link'
 import * as Yup from 'yup'
-import { useSearchParams } from 'next/navigation'
 import axios, { AxiosError } from 'axios'
 import { ErrorMessage, Field, Form, Formik, FormikHelpers } from 'formik'
 
 import { useAuth } from '@/hooks/auth'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import AuthCard from '@/components/AuthCard'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import AuthSessionStatus from '@/components/AuthSessionStatus'
 
 interface Values {
-  email: string
+  id: string
   password: string
   remember: boolean
 }
 
 const LoginPage = () => {
-  const searchParams = useSearchParams()
   const [status, setStatus] = useState<string>('')
 
   const { login } = useAuth({
@@ -26,31 +24,31 @@ const LoginPage = () => {
     redirectIfAuthenticated: '/dashboard',
   })
 
-  useEffect(() => {
-    const resetToken = searchParams.get('reset')
-    setStatus(resetToken ? atob(resetToken) : '')
-  }, [searchParams])
-
   const submitForm = async (
     values: Values,
     { setSubmitting, setErrors }: FormikHelpers<Values>,
   ): Promise<any> => {
     try {
-      await login(values)
+      await login({
+        id: values.id,
+        password: values.password
+      })
     } catch (error: Error | AxiosError | any) {
       if (axios.isAxiosError(error) && error.response?.status === 422) {
         setErrors(error.response?.data?.errors)
+      } else if (axios.isAxiosError(error) && error.response?.status === 401) {
+        setStatus('Invalid credentials')
+      } else {
+        setStatus(error.message !== null ? error.message : 'nggak ada error')
       }
     } finally {
       setSubmitting(false)
-      setStatus('')
     }
   }
 
   const LoginSchema = Yup.object().shape({
-    email: Yup.string()
-      .email('Invalid email')
-      .required('The email field is required.'),
+    id: Yup.string()
+      .required('The ID field is required.'),
     password: Yup.string().required('The password field is required.'),
   })
 
@@ -66,24 +64,24 @@ const LoginPage = () => {
       <Formik
         onSubmit={submitForm}
         validationSchema={LoginSchema}
-        initialValues={{ email: '', password: '', remember: false }}>
+        initialValues={{ id: '', password: '', remember: false }}>
         <Form className="space-y-4">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="id"
               className="undefined block font-medium text-sm text-gray-700">
-              Email
+              Employee ID
             </label>
 
             <Field
-              id="email"
-              name="email"
-              type="email"
+              id="id"
+              name="id"
+              type="text"
               className="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
 
             <ErrorMessage
-              name="email"
+              name="id"
               component="span"
               className="text-xs text-red-500"
             />
@@ -125,12 +123,6 @@ const LoginPage = () => {
           </div>
 
           <div className="flex items-center justify-end mt-4">
-            <Link
-              href="/forgot-password"
-              className="underline text-sm text-gray-600 hover:text-gray-900">
-              Forgot your password?
-            </Link>
-
             <button
               type="submit"
               className="ml-3 inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">

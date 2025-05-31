@@ -1,8 +1,22 @@
 import useSWR from 'swr'
 import axios from '@/lib/axios'
 import { useEffect } from 'react'
-import { AxiosResponse } from 'axios'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
+
+interface RegisterData {
+  name: string
+  email: string
+  password: string
+  password_confirmation: string
+  role?: string
+  position?: string
+  department_id?: number | null
+}
+
+interface LoginData {
+  id: string | number
+  password: string
+}
 
 export const useAuth = ({
   middleware,
@@ -12,7 +26,39 @@ export const useAuth = ({
   redirectIfAuthenticated?: string
 }) => {
   const router = useRouter()
-  const params = useParams()
+
+  // Store token in localStorage
+  const storeToken = (token: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token)
+      
+      // Set the token in axios headers for future requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    }
+  }
+
+  // Store user in localStorage
+  const storeUser = (user: any) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('user', JSON.stringify(user))
+    }
+  }
+
+  // Get token from localStorage
+  const getToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token')
+    }
+    return null
+  }
+
+  // Set token in axios headers on initial load
+  useEffect(() => {
+    const token = getToken()
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    }
+  }, [])
 
   const {
     data: user,
@@ -23,88 +69,107 @@ export const useAuth = ({
       .get('/api/user')
       .then(res => res.data)
       .catch(error => {
-        if (error.response.status !== 409) throw error
-
-        router.push('/verify-email')
+        if (error.response && error.response.status === 401) {
+          // Token is invalid or expired
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+          }
+        }
+        throw error
       }),
+    {
+      revalidateOnFocus: false,
+      shouldRetryOnError: false,
+    }
   )
 
-  const csrf = () => axios.get('/sanctum/csrf-cookie')
-
-  const register = async (data: {
-    name: string
-    email: string
-    password: string
-    password_confirmation: string
-  }) => {
+  // Register functionality
+  const register = async (data: RegisterData) => {
     try {
-      await csrf()
-
-      await axios.post('/register', data)
-      mutate()
+      const response = await axios.post('/api/register', data)
+      
+      // If the API returns a token directly (depends on your backend implementation)
+      if (response.data.token) {
+        storeToken(response.data.token)
+        if (response.data.user) {
+          storeUser(response.data.user)
+        }
+      }
+      
+      await mutate()
+      return response
     } catch (error) {
       throw error
     }
   }
 
-  const login = async (data: {
-    email: string
-    password: string
-    remember: boolean
-  }) => {
+  const login = async (data: LoginData) => {
     try {
-      await csrf()
-      await axios.post('/login', data)
-      mutate()
-    } catch (error) {
-      throw error
-    }
-  }
-
-  const forgotPassword = async (data: {
-    email: string
-  }): Promise<AxiosResponse> => {
-    try {
-      await csrf()
-      return await axios.post('/forgot-password', data)
-    } catch (error) {
-      throw error
-    }
-  }
-
-  const resetPassword = async (data: {
-    email: string
-    password: string
-    password_confirmation: string
-  }) => {
-    try {
-      await csrf()
-
-      const response = await axios.post('/reset-password', {
-        ...data,
-        token: params.token,
-      })
-
-      router.push('/login?reset=' + btoa(response.data.status))
-    } catch (error) {
-      throw error
-    }
-  }
-
-  const resendEmailVerification = async () => {
-    try {
-      return await axios.post('/email/verification-notification')
+      const response = await axios.post('/api/login', data)
+      
+      // Store the token and user data
+      if (response.data.token) {
+        storeToken(response.data.token)
+        if (response.data.user) {
+          storeUser(response.data.user)
+        }
+      }
+      
+      await mutate()
+      return response
     } catch (error) {
       throw error
     }
   }
 
   const logout = async () => {
-    if (!error) {
-      await axios.post('/logout').then(() => mutate())
+    try {
+      await axios.post('/api/logout')
+      
+      // Remove token and user data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        delete axios.defaults.headers.common['Authorization']
+      }
+      
+      await mutate(undefined)
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      
+      // Even if API call fails, remove token from client
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        delete axios.defaults.headers.common['Authorization']
+      }
+      
+      router.push('/login')
     }
+  }
 
-    window.location.pathname = '/login'
+  // Utility to get the current user role
+  const getUserRole = (): string | null => {
+    if (user) {
+      return user.role;
+    }
+    
+    // Try to get from localStorage as fallback
+    if (typeof window !== 'undefined') {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          return parsedUser.role || null;
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    
+    return null;
   }
 
   useEffect(() => {
@@ -112,23 +177,16 @@ export const useAuth = ({
       router.push(redirectIfAuthenticated)
     }
 
-    if (
-      window.location.pathname === '/verify-email' &&
-      user?.email_verified_at &&
-      redirectIfAuthenticated
-    ) {
-      router.push(redirectIfAuthenticated)
+    if (middleware === 'auth' && error) {
+      logout()
     }
-    if (middleware === 'auth' && error) logout()
   }, [user, error, middleware, redirectIfAuthenticated])
 
   return {
     user,
     register,
     login,
-    forgotPassword,
-    resetPassword,
-    resendEmailVerification,
     logout,
+    getUserRole,
   }
 }
