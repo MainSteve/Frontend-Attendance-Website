@@ -18,6 +18,7 @@ interface Values {
 
 const LoginPage = () => {
   const [status, setStatus] = useState<string>('')
+  const [debugError, setDebugError] = useState<string>('') // Add this state
 
   const { login } = useAuth({
     middleware: 'guest',
@@ -36,10 +37,17 @@ const LoginPage = () => {
     } catch (error: Error | AxiosError | any) {
       if (axios.isAxiosError(error) && error.response?.status === 422) {
         setErrors(error.response?.data?.errors)
+        setDebugError(JSON.stringify(error.response?.data, null, 2)) // Debug info
       } else if (axios.isAxiosError(error) && error.response?.status === 401) {
         setStatus('Invalid credentials')
+        setDebugError(JSON.stringify(error.response?.data, null, 2)) // Debug info
+      } else if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message ?? 'An error occurred'
+        setStatus(errorMessage)
+        setDebugError(JSON.stringify(error.response, null, 2)) // Debug info
       } else {
-        setStatus(error.message !== null ? error.message : 'nggak ada error')
+        setStatus(error.message ?? 'Unknown error occurred')
+        setDebugError(JSON.stringify(error, null, 2)) // Debug info
       }
     } finally {
       setSubmitting(false)
@@ -60,6 +68,16 @@ const LoginPage = () => {
         </Link>
       }>
       <AuthSessionStatus className="mb-4" status={status} />
+      
+      {/* Add debug error display */}
+      {debugError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-600 font-mono whitespace-pre-wrap">
+            Debug Error:
+            {debugError}
+          </p>
+        </div>
+      )}
 
       <Formik
         onSubmit={submitForm}

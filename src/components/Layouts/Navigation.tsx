@@ -1,154 +1,154 @@
 import Link from 'next/link'
 import { useState } from 'react'
-import { usePathname } from 'next/navigation'
-
-import NavLink from '@/components/NavLink'
-import Dropdown from '@/components/Dropdown'
-import ResponsiveNavLink, {
-  ResponsiveNavButton,
-} from '@/components/ResponsiveNavLink'
-import { DropdownButton } from '@/components/DropdownLink'
-import ApplicationLogo from '@/components/ApplicationLogo'
+import { Bell, Menu, X, LogOut } from 'lucide-react'
 
 import { UserType } from '@/types/User'
 import { useAuth } from '@/hooks/auth'
 
 const Navigation = ({ user }: { user: UserType }) => {
-  const pathname = usePathname()
-
   const { logout } = useAuth({})
-  const [open, setOpen] = useState<boolean>(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false)
 
   return (
-    <nav className="bg-white border-b border-gray-100">
-      {/* Primary Navigation Menu */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            {/* Logo */}
-            <div className="flex-shrink-0 flex items-center">
-              <Link href="/dashboard">
-                <ApplicationLogo className="block h-10 w-auto fill-current text-gray-600" />
-              </Link>
-            </div>
-
-            {/* Navigation Links */}
-            <div className="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-              <NavLink href="/dashboard" active={pathname === '/dashboard'}>
-                Dashboard
-              </NavLink>
-            </div>
+    <header className="bg-white border-b border-gray-200 shadow-sm">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link href="/dashboard">
+              <h1 className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer">
+                Attendance System
+              </h1>
+            </Link>
           </div>
 
-          {/* Settings Dropdown */}
-          <div className="hidden sm:flex sm:items-center sm:ml-6">
-            <Dropdown
-              align="right"
-              width={48}
-              trigger={
-                <button className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition duration-150 ease-in-out">
-                  <div>{user?.email}</div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Bell className="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-pointer transition-colors" />
 
-                  <div className="ml-1">
-                    <svg
-                      className="fill-current h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+            {/* User Profile Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                onKeyDown={e => e.key === 'Escape' && setIsDropdownOpen(false)}
+                aria-label="Close dropdown menu"
+                tabIndex={0}
+                className="flex items-center space-x-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
+                <img
+                  src={'/api/placeholder/32/32'} //user?.avatar ??
+                  alt="Profile"
+                  className="h-8 w-8 rounded-full object-cover border-2 border-gray-200"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {user?.name}
+                </span>
+                <svg
+                  className={`h-4 w-4 text-gray-400 transition-transform ${
+                    isDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <>
+                  <button
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsDropdownOpen(false)}
+                    onKeyDown={e =>
+                      e.key === 'Escape' && setIsDropdownOpen(false)
+                    }
+                    aria-label="Close dropdown menu"
+                    tabIndex={0}
+                  />
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-20">
+                    <div className="py-1">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900">
+                          {user?.name}
+                        </p>
+                        <p className="text-sm text-gray-500">{user?.email}</p>
+                      </div>
+                      <button
+                        onClick={logout}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 transition-colors">
+                        <LogOut className="h-4 w-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
                   </div>
-                </button>
-              }>
-              {/* Authentication */}
-              <DropdownButton onClick={logout}>Logout</DropdownButton>
-            </Dropdown>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Hamburger */}
-          <div className="-mr-2 flex items-center sm:hidden">
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
             <button
-              onClick={() => setOpen(open => !open)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
-              <svg
-                className="h-6 w-6"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 24 24">
-                {open ? (
-                  <path
-                    className="inline-flex"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    className="inline-flex"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors">
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              {/* User Info */}
+              <div className="flex items-center px-3 py-3 bg-gray-50 rounded-lg">
+                <img
+                  src={'/api/placeholder/40/40'} //user?.avatar ??
+                  alt="Profile"
+                  className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
+                />
+                <div className="ml-3 flex-1">
+                  <div className="text-base font-medium text-gray-800">
+                    {user?.name}
+                  </div>
+                  <div className="text-sm text-gray-500">{user?.email}</div>
+                </div>
+                <Bell className="h-5 w-5 text-gray-400" />
+              </div>
+
+              {/* Navigation Links */}
+              <Link
+                href="/dashboard"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}>
+                Dashboard
+              </Link>
+
+              {/* Logout Button */}
+              <button
+                onClick={() => {
+                  logout()
+                  setIsMobileMenuOpen(false)
+                }}
+                className="w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md flex items-center space-x-2 transition-colors">
+                <LogOut className="h-5 w-5" />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Responsive Navigation Menu */}
-      {open && (
-        <div className="block sm:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            <ResponsiveNavLink
-              href="/dashboard"
-              active={pathname === '/dashboard'}>
-              Dashboard
-            </ResponsiveNavLink>
-          </div>
-
-          {/* Responsive Settings Options */}
-          <div className="pt-4 pb-1 border-t border-gray-200">
-            <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
-                <svg
-                  className="h-10 w-10 fill-current text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </div>
-
-              <div className="ml-3">
-                <div className="font-medium text-base text-gray-800">
-                  {user?.name}
-                </div>
-                <div className="font-medium text-sm text-gray-500">
-                  {user?.email}
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 space-y-1">
-              {/* Authentication */}
-              <ResponsiveNavButton onClick={logout}>Logout</ResponsiveNavButton>
-            </div>
-          </div>
-        </div>
-      )}
-    </nav>
+    </header>
   )
 }
 

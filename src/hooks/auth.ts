@@ -31,7 +31,7 @@ export const useAuth = ({
   const storeToken = (token: string) => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token)
-      
+
       // Set the token in axios headers for future requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
     }
@@ -64,31 +64,38 @@ export const useAuth = ({
     data: user,
     error,
     mutate,
-  } = useSWR('/api/user', () =>
-    axios
-      .get('/api/user')
-      .then(res => res.data)
-      .catch(error => {
-        if (error.response && error.response.status === 401) {
-          // Token is invalid or expired
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
+    isLoading: swrIsLoading,
+    isValidating,
+  } = useSWR(
+    '/api/user',
+    () =>
+      axios
+        .get('/api/user')
+        .then(res => res.data)
+        .catch(error => {
+          if (error.response && error.response.status === 401) {
+            // Token is invalid or expired
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('token')
+              localStorage.removeItem('user')
+            }
           }
-        }
-        throw error
-      }),
+          throw error
+        }),
     {
       revalidateOnFocus: false,
       shouldRetryOnError: false,
-    }
+    },
   )
+
+  // Calculate loading state
+  const isLoading = swrIsLoading || isValidating
 
   // Register functionality
   const register = async (data: RegisterData) => {
     try {
       const response = await axios.post('/api/register', data)
-      
+
       // If the API returns a token directly (depends on your backend implementation)
       if (response.data.token) {
         storeToken(response.data.token)
@@ -96,18 +103,18 @@ export const useAuth = ({
           storeUser(response.data.user)
         }
       }
-      
+
       await mutate()
       return response
     } catch (error) {
-      throw error
+      console.error(error)
     }
   }
 
   const login = async (data: LoginData) => {
     try {
       const response = await axios.post('/api/login', data)
-      
+
       // Store the token and user data
       if (response.data.token) {
         storeToken(response.data.token)
@@ -115,37 +122,37 @@ export const useAuth = ({
           storeUser(response.data.user)
         }
       }
-      
+
       await mutate()
       return response
     } catch (error) {
-      throw error
+      console.error(error)
     }
   }
 
   const logout = async () => {
     try {
       await axios.post('/api/logout')
-      
+
       // Remove token and user data
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         delete axios.defaults.headers.common['Authorization']
       }
-      
+
       await mutate(undefined)
       router.push('/login')
     } catch (error) {
       console.error('Logout error:', error)
-      
+
       // Even if API call fails, remove token from client
       if (typeof window !== 'undefined') {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         delete axios.defaults.headers.common['Authorization']
       }
-      
+
       router.push('/login')
     }
   }
@@ -153,23 +160,23 @@ export const useAuth = ({
   // Utility to get the current user role
   const getUserRole = (): string | null => {
     if (user) {
-      return user.role;
+      return user.role
     }
-    
+
     // Try to get from localStorage as fallback
     if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('user');
+      const storedUser = localStorage.getItem('user')
       if (storedUser) {
         try {
-          const parsedUser = JSON.parse(storedUser);
-          return parsedUser.role || null;
+          const parsedUser = JSON.parse(storedUser)
+          return parsedUser.role ?? null
         } catch (e) {
-          return null;
+          console.error(e)
         }
       }
     }
-    
-    return null;
+
+    return null
   }
 
   useEffect(() => {
@@ -188,5 +195,8 @@ export const useAuth = ({
     login,
     logout,
     getUserRole,
+    isLoading,
+    error,
+    mutate,
   }
 }
