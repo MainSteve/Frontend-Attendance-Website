@@ -1,100 +1,116 @@
-"use client";
+'use client'
 
-import React from 'react';
-import { FileText, Loader2 } from 'lucide-react';
-import { useAttendanceSummary } from '@/hooks/attendance';
+import React from 'react'
+import { FileText, Eye } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import AttendanceReportSummary from '@/components/attendance/AttendanceReportSummary'
 
 interface AttendanceSummaryCardProps {
-  month?: number;
-  year?: number;
-  className?: string;
+  month?: number
+  year?: number
+  className?: string
 }
 
-const AttendanceSummaryCard: React.FC<AttendanceSummaryCardProps> = ({ 
-  month, 
+const AttendanceSummaryCard: React.FC<AttendanceSummaryCardProps> = ({
+  month,
   year,
-  className = "col-span-2"
+  className = 'col-span-2',
 }) => {
-  const { attendanceSummary, isLoading, isError } = useAttendanceSummary(month, year);
+  const router = useRouter()
 
-  if (isLoading) {
-    return (
-      <div className={`${className} bg-white rounded-lg shadow p-6`}>
-        <div className="flex items-center mb-4">
-          <FileText className="h-5 w-5 text-blue-500 mr-2" />
-          <h3 className="text-lg font-medium text-gray-800">Ringkasan Kehadiran Bulan Ini</h3>
-        </div>
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          <span className="text-gray-600 ml-2">Loading attendance summary...</span>
-        </div>
-      </div>
-    );
+  const getDateRange = (month: number, year: number) => {
+    // First day of the month - create in UTC to avoid timezone shift
+    const startDate = new Date(Date.UTC(year, month - 1, 1))
+      .toISOString()
+      .split('T')[0]
+
+    // Today or last day of month if current month
+    const today = new Date()
+    const isCurrentMonth =
+      month === today.getMonth() + 1 && year === today.getFullYear()
+
+    let endDate: string
+    if (isCurrentMonth) {
+      // Create today's date in UTC
+      endDate = new Date(
+        Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()),
+      )
+        .toISOString()
+        .split('T')[0]
+    } else {
+      // Last day of the selected month
+      const lastDay = new Date(Date.UTC(year, month, 0))
+      endDate = lastDay.toISOString().split('T')[0]
+    }
+
+    return { startDate, endDate }
   }
 
-  if (isError) {
+  const handleViewDetails = () => {
+    // Navigate to detailed attendance page
+    const currentMonth = month ?? new Date().getMonth() + 1
+    const currentYear = year ?? new Date().getFullYear()
+    router.push(
+      `/dashboard/attendance/details?month=${currentMonth}&year=${currentYear}`,
+    )
+  }
+
+  // Get date range for current month/year
+  const currentMonth = month ?? new Date().getMonth() + 1
+  const currentYear = year ?? new Date().getFullYear()
+  const { startDate, endDate } = getDateRange(currentMonth, currentYear)
+
+  // If no end date (not current month), don't render
+  if (!endDate) {
     return (
       <div className={`${className} bg-white rounded-lg shadow p-6`}>
-        <div className="flex items-center mb-4">
-          <FileText className="h-5 w-5 text-blue-500 mr-2" />
-          <h3 className="text-lg font-medium text-gray-800">Ringkasan Kehadiran Bulan Ini</h3>
-        </div>
-        <div className="text-center text-red-600 py-8">
-          <p>Failed to load attendance summary</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="text-blue-600 hover:text-blue-800 mt-2"
-          >
-            Retry
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <FileText className="h-5 w-5 text-blue-500 mr-2" />
+            <h3 className="text-lg font-medium text-gray-800">
+              Ringkasan Kehadiran Bulan Ini
+            </h3>
+          </div>
+          <button
+            onClick={handleViewDetails}
+            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+            <Eye className="h-4 w-4 mr-1" />
+            Details
           </button>
         </div>
+        <div className="text-center text-gray-500 py-8">
+          <p>No data available for future months</p>
+        </div>
       </div>
-    );
+    )
   }
-
-  const attendancePercentage = attendanceSummary.totalDays > 0 
-    ? Math.round(((attendanceSummary.present + attendanceSummary.late) / attendanceSummary.totalDays) * 100)
-    : 0;
 
   return (
     <div className={`${className} bg-white rounded-lg shadow p-6`}>
-      <div className="flex items-center mb-4">
-        <FileText className="h-5 w-5 text-blue-500 mr-2" />
-        <h3 className="text-lg font-medium text-gray-800">Ringkasan Kehadiran Bulan Ini</h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <FileText className="h-5 w-5 text-blue-500 mr-2" />
+          <h3 className="text-lg font-medium text-gray-800">
+            Ringkasan Kehadiran Bulan Ini
+          </h3>
+        </div>
+        <button
+          onClick={handleViewDetails}
+          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+          <Eye className="h-4 w-4 mr-1" />
+          Details
+        </button>
       </div>
-      
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-green-50 rounded-lg p-4 text-center">
-          <span className="text-2xl font-bold text-green-600">{attendanceSummary.present}</span>
-          <p className="text-sm text-gray-600 mt-1">Hadir</p>
-        </div>
-        <div className="bg-yellow-50 rounded-lg p-4 text-center">
-          <span className="text-2xl font-bold text-yellow-600">{attendanceSummary.late}</span>
-          <p className="text-sm text-gray-600 mt-1">Terlambat</p>
-        </div>
-        <div className="bg-red-50 rounded-lg p-4 text-center">
-          <span className="text-2xl font-bold text-red-600">{attendanceSummary.absent}</span>
-          <p className="text-sm text-gray-600 mt-1">Absen</p>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-4 text-center">
-          <span className="text-2xl font-bold text-blue-600">{attendanceSummary.leave}</span>
-          <p className="text-sm text-gray-600 mt-1">Cuti</p>
-        </div>
-      </div>
-      
-      <div className="mt-4">
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
-          <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-            style={{ width: `${attendancePercentage}%` }}
-          ></div>
-        </div>
-        <p className="text-xs text-gray-500 mt-2">
-          Progress: {attendanceSummary.present + attendanceSummary.late} dari {attendanceSummary.totalDays} hari ({attendancePercentage}%)
-        </p>
-      </div>
-    </div>
-  );
-};
 
-export default AttendanceSummaryCard;
+      <AttendanceReportSummary
+        startDate={startDate}
+        endDate={endDate}
+        month={currentMonth}
+        year={currentYear}
+        isDashboard={true}
+      />
+    </div>
+  )
+}
+
+export default AttendanceSummaryCard

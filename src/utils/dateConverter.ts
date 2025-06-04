@@ -8,23 +8,23 @@ export const formatDate = (date: Date): string => {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-  });
-};
+  })
+}
 
 // Get day name from date
 export const getDayName = (date: Date): string => {
   return date.toLocaleDateString('en-ID', {
     timeZone: 'Asia/Jakarta',
-    weekday: 'long'
-  });
-};
+    weekday: 'long',
+  })
+}
 
 // Format date with day name
 export const formatDateWithDay = (date: Date): string => {
-  const dayName = getDayName(date);
-  const formattedDate = formatDate(date);
-  return `${dayName}, ${formattedDate}`;
-};
+  const dayName = getDayName(date)
+  const formattedDate = formatDate(date)
+  return `${dayName}, ${formattedDate}`
+}
 
 // Get only time from date
 export const formatTime = (date: Date): string => {
@@ -32,9 +32,9 @@ export const formatTime = (date: Date): string => {
     timeZone: 'Asia/Jakarta',
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit'
-  });
-};
+    second: '2-digit',
+  })
+}
 
 // Format date without time
 export const formatDateOnly = (date: Date): string => {
@@ -42,16 +42,16 @@ export const formatDateOnly = (date: Date): string => {
     timeZone: 'Asia/Jakarta',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
-  });
-};
+    day: 'numeric',
+  })
+}
 
 // Format date with day name but no time
 export const formatDateWithDayOnly = (date: Date): string => {
-  const dayName = getDayName(date);
-  const formattedDate = formatDateOnly(date);
-  return `${dayName}, ${formattedDate}`;
-};
+  const dayName = getDayName(date)
+  const formattedDate = formatDateOnly(date)
+  return `${dayName}, ${formattedDate}`
+}
 
 // Usage example:
 // const utcDate = "2025-05-31T10:00:00Z";

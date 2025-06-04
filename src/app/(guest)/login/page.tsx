@@ -26,33 +26,49 @@ const LoginPage = () => {
   })
 
   const submitForm = async (
-    values: Values,
-    { setSubmitting, setErrors }: FormikHelpers<Values>,
-  ): Promise<any> => {
-    try {
-      await login({
-        id: values.id,
-        password: values.password
+  values: Values,
+  { setSubmitting, setErrors }: FormikHelpers<Values>,
+): Promise<any> => {
+  try {
+    await login({
+      id: values.id,
+      password: values.password
+    })
+  } catch (error: Error | AxiosError | any) {
+    // Log the full error to console first
+    console.error('Login Error:', error)
+    
+    if (axios.isAxiosError(error) && error.response?.status === 422) {
+      console.error('422 Validation Error:', error.response?.data)
+      setErrors(error.response?.data?.errors)
+      setDebugError(JSON.stringify(error.response?.data, null, 2))
+    } else if (axios.isAxiosError(error) && error.response?.status === 401) {
+      console.error('401 Unauthorized:', error.response?.data)
+      setStatus('Invalid credentials')
+      setDebugError(JSON.stringify(error.response?.data, null, 2))
+    } else if (axios.isAxiosError(error)) {
+      console.error('Axios Error:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        stack: error.stack
       })
-    } catch (error: Error | AxiosError | any) {
-      if (axios.isAxiosError(error) && error.response?.status === 422) {
-        setErrors(error.response?.data?.errors)
-        setDebugError(JSON.stringify(error.response?.data, null, 2)) // Debug info
-      } else if (axios.isAxiosError(error) && error.response?.status === 401) {
-        setStatus('Invalid credentials')
-        setDebugError(JSON.stringify(error.response?.data, null, 2)) // Debug info
-      } else if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message ?? 'An error occurred'
-        setStatus(errorMessage)
-        setDebugError(JSON.stringify(error.response, null, 2)) // Debug info
-      } else {
-        setStatus(error.message ?? 'Unknown error occurred')
-        setDebugError(JSON.stringify(error, null, 2)) // Debug info
-      }
-    } finally {
-      setSubmitting(false)
+      const errorMessage = error.response?.data?.message ?? 'An error occurred'
+      setStatus(errorMessage)
+      setDebugError(JSON.stringify(error.response, null, 2))
+    } else {
+      console.error('Non-Axios Error:', {
+        message: error.message,
+        stack: error.stack,
+        error: error
+      })
+      setStatus(error.message ?? 'Unknown error occurred')
+      setDebugError(JSON.stringify(error, null, 2))
     }
+  } finally {
+    setSubmitting(false)
   }
+}
 
   const LoginSchema = Yup.object().shape({
     id: Yup.string()
