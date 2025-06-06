@@ -61,3 +61,64 @@ export const formatDateWithDayOnly = (date: Date): string => {
 // const timeOnly = formatTime(localDate);                        // "17:00:00"
 // const dateOnly = formatDateOnly(localDate);                    // "May 31, 2025"
 // const dateWithDayOnly = formatDateWithDayOnly(localDate);      // "Saturday, May 31, 2025"
+
+// Add these functions to your existing src/utils/dateConverter.ts
+
+/**
+ * Parse date string and format with Jakarta timezone (full date + time)
+ * @param dateString - ISO date string from API (e.g., "2025-05-31T10:00:00Z")
+ * @returns Formatted string (e.g., "May 31, 2025, 17:00:00")
+ */
+export const parseAndFormatJakartaDate = (dateString: string): string => {
+  const date = new Date(dateString)
+  return formatDate(date)
+}
+
+/**
+ * Parse date string and format time only with Jakarta timezone
+ * @param dateString - ISO date string from API (e.g., "2025-05-31T10:00:00Z")
+ * @returns Formatted time string (e.g., "17:00:00")
+ */
+export const parseAndFormatJakartaTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  return formatTime(date)
+}
+
+/**
+ * Parse date string and format date only with Jakarta timezone
+ * @param dateString - ISO date string from API (e.g., "2025-05-31T10:00:00Z")
+ * @returns Formatted date string (e.g., "May 31, 2025")
+ */
+export const parseAndFormatJakartaDateOnly = (dateString: string): string => {
+  const date = new Date(dateString)
+  return formatDateOnly(date)
+}
+
+/**
+ * Parse date string and format with day name + date (no time) with Jakarta timezone
+ * @param dateString - ISO date string from API (e.g., "2025-05-31T10:00:00Z")
+ * @returns Formatted string (e.g., "Saturday, May 31, 2025")
+ */
+export const parseAndFormatJakartaDateWithDay = (
+  dateString: string,
+): string => {
+  const date = new Date(dateString)
+  return formatDateWithDayOnly(date)
+}
+
+// Updated usage examples:
+//
+// FROM API STRING:
+// const apiDateString = "2025-05-31T10:00:00Z";
+//
+// parseAndFormatJakartaDate(apiDateString);        // "May 31, 2025, 17:00:00"
+// parseAndFormatJakartaTime(apiDateString);        // "17:00:00"
+// parseAndFormatJakartaDateOnly(apiDateString);    // "May 31, 2025"
+// parseAndFormatJakartaDateWithDay(apiDateString); // "Saturday, May 31, 2025"
+//
+// FROM DATE OBJECT (existing functions):
+// const dateObj = new Date();
+// formatDate(dateObj);                // "May 31, 2025, 17:00:00"
+// formatTime(dateObj);                // "17:00:00"
+// formatDateOnly(dateObj);            // "May 31, 2025"
+// formatDateWithDayOnly(dateObj);     // "Saturday, May 31, 2025"

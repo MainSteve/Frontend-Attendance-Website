@@ -21,10 +21,14 @@ import {
   Image as ImageIcon,
   AlertCircle,
 } from 'lucide-react'
-// import { AttendanceRecord } from '@/types/Attendance'
 import { useTaskLogMutations } from '@/hooks/useTaskLogMutations'
 import { useAttendanceDetail } from '@/hooks/useAttendanceDetail'
 import ImageUploader from '@/components/common/ImageUploader'
+import {
+  parseAndFormatJakartaDate,
+  formatDateWithDayOnly,
+  parseAndFormatJakartaTime,
+} from '@/utils/dateConverter'
 
 interface AttendanceRecordDetailModalProps {
   recordId: number | null
@@ -83,24 +87,16 @@ const AttendanceRecordDetailModal: React.FC<
   if (!isOpen) return null
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    })
+    return parseAndFormatJakartaTime(dateString)
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
+    const date = new Date(dateString)
+    return formatDateWithDayOnly(date)
   }
 
   const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('id-ID')
+    return parseAndFormatJakartaDate(dateString)
   }
 
   const getClockTypeIcon = (type: string) => {

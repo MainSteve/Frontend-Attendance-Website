@@ -7,8 +7,9 @@ import { ErrorMessage, Field, Form, Formik, FormikHelpers } from 'formik'
 import { useAuth } from '@/hooks/auth'
 import ApplicationLogo from '@/components/ApplicationLogo'
 import AuthCard from '@/components/AuthCard'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AuthSessionStatus from '@/components/AuthSessionStatus'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 interface Values {
   id: string
@@ -18,61 +19,84 @@ interface Values {
 
 const LoginPage = () => {
   const [status, setStatus] = useState<string>('')
-  const [debugError, setDebugError] = useState<string>('') // Add this state
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
-  const { login } = useAuth({
+  const redirectUrl = searchParams.get('redirect')
+
+  const { user, login } = useAuth({
     middleware: 'guest',
     redirectIfAuthenticated: '/dashboard',
   })
 
-  const submitForm = async (
-  values: Values,
-  { setSubmitting, setErrors }: FormikHelpers<Values>,
-): Promise<any> => {
-  try {
-    await login({
-      id: values.id,
-      password: values.password
-    })
-  } catch (error: Error | AxiosError | any) {
-    // Log the full error to console first
-    console.error('Login Error:', error)
-    
-    if (axios.isAxiosError(error) && error.response?.status === 422) {
-      console.error('422 Validation Error:', error.response?.data)
-      setErrors(error.response?.data?.errors)
-      setDebugError(JSON.stringify(error.response?.data, null, 2))
-    } else if (axios.isAxiosError(error) && error.response?.status === 401) {
-      console.error('401 Unauthorized:', error.response?.data)
-      setStatus('Invalid credentials')
-      setDebugError(JSON.stringify(error.response?.data, null, 2))
-    } else if (axios.isAxiosError(error)) {
-      console.error('Axios Error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-        stack: error.stack
-      })
-      const errorMessage = error.response?.data?.message ?? 'An error occurred'
-      setStatus(errorMessage)
-      setDebugError(JSON.stringify(error.response, null, 2))
-    } else {
-      console.error('Non-Axios Error:', {
-        message: error.message,
-        stack: error.stack,
-        error: error
-      })
-      setStatus(error.message ?? 'Unknown error occurred')
-      setDebugError(JSON.stringify(error, null, 2))
+  // If user is already authenticated, redirect them
+  useEffect(() => {
+    if (user) {
+      if (redirectUrl) {
+        // Redirect to the original QR scan page
+        router.push(decodeURIComponent(redirectUrl))
+      } else {
+        // Default redirect to dashboard
+        router.push('/dashboard')
+      }
     }
-  } finally {
-    setSubmitting(false)
+  }, [user, redirectUrl, router])
+
+  const handleLoginSuccess = () => {
+    if (redirectUrl) {
+      // After successful login, redirect to QR scan page
+      router.push(decodeURIComponent(redirectUrl))
+    } else {
+      // Default redirect to dashboard
+      router.push('/dashboard')
+    }
   }
-}
+
+  const submitForm = async (
+    values: Values,
+    { setSubmitting, setErrors }: FormikHelpers<Values>,
+  ): Promise<any> => {
+    try {
+      await login({
+        id: values.id,
+        password: values.password,
+      })
+    } catch (error: Error | AxiosError | any) {
+      // Log the full error to console first
+      console.error('Login Error:', error)
+
+      if (axios.isAxiosError(error) && error.response?.status === 422) {
+        console.error('422 Validation Error:', error.response?.data)
+        setErrors(error.response?.data?.errors)
+      } else if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.error('401 Unauthorized:', error.response?.data)
+        setStatus('Invalid credentials')
+      } else if (axios.isAxiosError(error)) {
+        console.error('Axios Error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+          stack: error.stack,
+        })
+        const errorMessage =
+          error.response?.data?.message ?? 'An error occurred'
+        setStatus(errorMessage)
+      } else {
+        console.error('Non-Axios Error:', {
+          message: error.message,
+          stack: error.stack,
+          error: error,
+        })
+        setStatus(error.message ?? 'Unknown error occurred')
+      }
+    } finally {
+      setSubmitting(false)
+      handleLoginSuccess()
+    }
+  }
 
   const LoginSchema = Yup.object().shape({
-    id: Yup.string()
-      .required('The ID field is required.'),
+    id: Yup.string().required('The ID field is required.'),
     password: Yup.string().required('The password field is required.'),
   })
 
@@ -84,13 +108,10 @@ const LoginPage = () => {
         </Link>
       }>
       <AuthSessionStatus className="mb-4" status={status} />
-      
-      {/* Add debug error display */}
-      {debugError && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-600 font-mono whitespace-pre-wrap">
-            Debug Error:
-            {debugError}
+      {redirectUrl && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-700">
+            Please log in to continue with QR code attendance.
           </p>
         </div>
       )}
