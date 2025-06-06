@@ -1,14 +1,13 @@
 // src/components/qr/QrScanner.tsx
-// Note: You need to install qr-scanner: npm install qr-scanner
+// Note: You need to install @yudiel/react-qr-scanner: npm install @yudiel/react-qr-scanner
 
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { X, Camera, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Camera, AlertCircle, ExternalLink } from 'lucide-react';
+import { Scanner, IDetectedBarcode } from '@yudiel/react-qr-scanner';
+import { useRouter } from 'next/navigation';
 import { QrScannerProps } from '@/types/qrcode';
-
-// Import QrScanner (you need to install: npm install qr-scanner)
-// import QrScanner from 'qr-scanner';
 
 const QrScanner: React.FC<QrScannerProps> = ({
   onScanSuccess,
@@ -16,85 +15,258 @@ const QrScanner: React.FC<QrScannerProps> = ({
   onClose,
   isOpen
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [qrScanner, setQrScanner] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [hasCamera, setHasCamera] = useState(false);
+  const [isScanning, setIsScanning] = useState(true);
+  const [scannedUrl, setScannedUrl] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const initializeScanner = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Check if QrScanner is available (you need to install qr-scanner)
-        const QrScanner = (await import('qr-scanner')).default;
-        
-        if (!videoRef.current) {
-          throw new Error('Video element not found');
-        }
-
-        // Check camera availability
-        const hasCamera = await QrScanner.hasCamera();
-        setHasCamera(hasCamera);
-
-        if (!hasCamera) {
-          throw new Error('No camera found on this device');
-        }
-
-        // Create QR scanner instance
-        const scanner = new QrScanner(
-          videoRef.current,
-          (result: any) => {
-            console.log('QR code detected:', result.data);
-            onScanSuccess(result.data);
-            cleanup();
-          },
-          {
-            onDecodeError: (err: any) => {
-              // Don't show decode errors as they happen continuously while scanning
-              console.debug('Decode error (normal):', err);
-            },
-            highlightScanRegion: true,
-            highlightCodeOutline: true,
-            preferredCamera: 'environment', // Use back camera if available
-          }
-        );
-
-        await scanner.start();
-        setQrScanner(scanner);
-        setIsLoading(false);
-
-      } catch (err: any) {
-        console.error('Scanner initialization error:', err);
-        const errorMessage = err.message ?? 'Failed to initialize camera';
-        setError(errorMessage);
-        onScanError(errorMessage);
-        setIsLoading(false);
-      }
-    };
-
-    initializeScanner();
-
-    return () => {
-      cleanup();
-    };
-  }, [isOpen]);
-
-  const cleanup = () => {
-    if (qrScanner) {
-      qrScanner.stop();
-      qrScanner.destroy();
-      setQrScanner(null);
+  // Function to check if a string is a valid URL
+  const isValidUrl = (string: string): boolean => {
+    try {
+      const url = new URL(string);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
     }
   };
 
+  // Function to check if URL is safe to navigate to
+  const isSafeUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      // Add your domain whitelist here if needed
+      const allowedDomains = [
+        'localhost',
+        '127.0.0.1',
+        '192.168.1.12', // Your local IP
+        // Add other trusted domains
+      ];
+      
+      const hostname = urlObj.hostname;
+      return allowedDomains.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
+    } catch {
+      return false;
+    }
+  };
+
+  const handleScan = (detectedCodes: IDetectedBarcode[]) => {
+    if (detectedCodes && detectedCodes.length > 0) {
+      const qrData = detectedCodes[0].rawValue;
+      console.log('QR code detected:', qrData);
+      
+      // Check if the scanned data is a URL
+      if (isValidUrl(qrData)) {
+        if (isSafeUrl(qrData)) {
+          setScannedUrl(qrData);
+          setShowConfirmation(true);
+          setIsScanning(false);
+        }
+      } else {
+        // If it's not a URL, use the original callback
+        onScanSuccess(qrData);
+        handleClose();
+      }
+    }
+  };
+
+  const handleNavigateToUrl = () => {
+    if (scannedUrl) {
+      try {
+        const url = new URL(scannedUrl);
+        
+        // If it's the same origin or trusted domain, use Next.js router
+        if (isSafeUrl(scannedUrl) && (url.hostname === window.location.hostname || url.hostname === '192.168.1.12')) {
+          // Extract the path and query for Next.js router
+          const pathWithQuery = url.pathname + url.search + url.hash;
+          router.push(pathWithQuery);
+        } else {
+          // For external URLs, open in new tab
+          window.open(scannedUrl, '_blank', 'noopener,noreferrer');
+        }
+        
+        onScanSuccess(scannedUrl);
+        handleClose();
+      } catch (error) {
+        console.error('Navigation error:', error);
+        onScanError('Failed to navigate to URL');
+      }
+    }
+  };
+
+  const handleCancelNavigation = () => {
+    setScannedUrl(null);
+    setShowConfirmation(false);
+    setIsScanning(true);
+  };
+
+  const handleError = (error: unknown) => {
+    console.error('Scanner error:', error);
+    let errorMessage = 'Failed to access camera';
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    }
+    
+    setError(errorMessage);
+    onScanError(errorMessage);
+    setIsScanning(false);
+  };
+
   const handleClose = () => {
-    cleanup();
+    setError(null);
+    setIsScanning(true);
+    setScannedUrl(null);
+    setShowConfirmation(false);
     onClose();
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    setIsScanning(true);
+    setScannedUrl(null);
+    setShowConfirmation(false);
+  };
+
+  // Function to render the appropriate content based on current state
+  const renderContent = () => {
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-red-600 text-center mb-4">{error}</p>
+          <div className="text-sm text-gray-600 text-center mb-4">
+            <p>Tips:</p>
+            <ul className="list-disc list-inside mt-2 space-y-1">
+              <li>Make sure camera permission is granted</li>
+              <li>Check if another app is using the camera</li>
+              <li>Try using HTTPS or localhost</li>
+              <li>Ensure your device has a camera</li>
+            </ul>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={handleRetry}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (showConfirmation && scannedUrl) {
+      return (
+        <div className="flex flex-col items-center justify-center py-8">
+          <ExternalLink className="h-12 w-12 text-blue-500 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Navigate to URL?
+          </h3>
+          <p className="text-sm text-gray-600 text-center mb-4">
+            The QR code contains a link. Do you want to navigate to:
+          </p>
+          <div className="bg-gray-100 p-3 rounded-md mb-6 max-w-full">
+            <p className="text-sm font-mono text-gray-800 break-all">
+              {scannedUrl}
+            </p>
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={handleNavigateToUrl}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open Link
+            </button>
+            <button
+              onClick={handleCancelNavigation}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Scan Again
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Default scanner content
+    return (
+      <>
+        {/* Scanner Component */}
+        <div className="relative mb-4">
+          <div className="w-full h-64 bg-black rounded-lg overflow-hidden">
+            {isScanning && (
+              <Scanner
+                onScan={handleScan}
+                onError={handleError}
+                formats={['qr_code']} // Focus only on QR codes
+                constraints={{
+                  facingMode: 'environment', // Use back camera if available
+                  width: { min: 640, ideal: 1280, max: 1920 },
+                  height: { min: 480, ideal: 720, max: 1080 }
+                }}
+                styles={{
+                  container: { 
+                    width: '100%', 
+                    height: '256px',
+                    borderRadius: '8px',
+                    overflow: 'hidden'
+                  },
+                  video: { 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'cover' as const
+                  }
+                }}
+                components={{
+                  finder: true,
+                  tracker: (detectedCodes, ctx) => {
+                    // Custom tracker to highlight detected QR codes
+                    detectedCodes.forEach((code) => {
+                      const [first, second, third, fourth] = code.cornerPoints;
+                      ctx.strokeStyle = '#00ff00';
+                      ctx.lineWidth = 4;
+                      ctx.beginPath();
+                      ctx.moveTo(first.x, first.y);
+                      ctx.lineTo(second.x, second.y);
+                      ctx.lineTo(third.x, third.y);
+                      ctx.lineTo(fourth.x, fourth.y);
+                      ctx.lineTo(first.x, first.y);
+                      ctx.stroke();
+                    });
+                  }
+                }}
+                classNames={{
+                  container: 'qr-scanner-container',
+                  video: 'qr-scanner-video'
+                }}
+                allowMultiple={false}
+                scanDelay={300}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Instructions */}
+        <div className="text-center space-y-2">
+          <p className="text-gray-600">
+            Position the QR code within the frame
+          </p>
+          <p className="text-sm text-gray-500">
+            The scanner will automatically detect the code
+          </p>
+        </div>
+      </>
+    );
   };
 
   if (!isOpen) return null;
@@ -120,69 +292,11 @@ const QrScanner: React.FC<QrScannerProps> = ({
 
         {/* Content */}
         <div className="p-4">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-              <p className="text-gray-600">Initializing camera...</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Please allow camera access when prompted
-              </p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
-              <p className="text-red-600 text-center mb-4">{error}</p>
-              {error.includes('camera') && (
-                <div className="text-sm text-gray-600 text-center">
-                  <p>Tips:</p>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Make sure camera permission is granted</li>
-                    <li>Check if another app is using the camera</li>
-                    <li>Try refreshing the page</li>
-                  </ul>
-                </div>
-              )}
-              <button
-                onClick={handleClose}
-                className="mt-4 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                Close
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* Video Element */}
-              <div className="relative mb-4">
-                <video
-                  ref={videoRef}
-                  className="w-full h-64 bg-black rounded-lg object-cover"
-                  playsInline
-                  muted
-                />
-                
-                {/* Scanning Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-48 h-48 border-2 border-white rounded-lg opacity-50">
-                    <div className="w-full h-full border-2 border-blue-500 rounded-lg animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Instructions */}
-              <div className="text-center space-y-2">
-                <p className="text-gray-600">
-                  Position the QR code within the frame
-                </p>
-                <p className="text-sm text-gray-500">
-                  The scanner will automatically detect the code
-                </p>
-              </div>
-            </>
-          )}
+          {renderContent()}
         </div>
 
         {/* Footer */}
-        {!isLoading && !error && (
+        {!error && !showConfirmation && (
           <div className="flex justify-center p-4 border-t border-gray-200">
             <button
               onClick={handleClose}

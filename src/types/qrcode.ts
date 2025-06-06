@@ -34,11 +34,13 @@ export interface QrProcessResponse {
 }
 
 export interface QrScannerProps {
-  onScanSuccess: (result: string) => void
+  onScanSuccess: (data: string) => void
   onScanError: (error: string) => void
   onClose: () => void
   isOpen: boolean
 }
+
+export type { IDetectedBarcode } from '@yudiel/react-qr-scanner'
 
 export interface AttendanceMethodModalProps {
   isOpen: boolean

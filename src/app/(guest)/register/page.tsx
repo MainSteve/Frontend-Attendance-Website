@@ -52,7 +52,7 @@ const RegisterPage = () => {
     const fetchDepartments = async () => {
       try {
         setLoading(true)
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/departments`)
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/departments`)
         setDepartments(response.data)
         setError(null)
       } catch (err) {
