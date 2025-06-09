@@ -95,7 +95,7 @@ const ImageUploader = ({
             <Upload className="h-8 w-8 text-gray-400 mb-2" />
             <span className="text-sm text-gray-600">{label}</span>
             <span className="text-xs text-gray-500 mt-1 mb-3">
-              JPG, PNG, WEBP max 5MB
+              JPG, PNG, WEBP max 10MB
             </span>
             <div className="flex flex-col gap-2">
               <label

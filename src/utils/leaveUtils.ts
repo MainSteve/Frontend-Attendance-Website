@@ -1,86 +1,20 @@
-export const formatDate = (date: Date): string => {
-  return date.toLocaleString('en-ID', {
-    timeZone: 'Asia/Jakarta',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
+// src/lib/leave-utils.ts
 
-export const getDayName = (date: Date): string => {
-  return date.toLocaleDateString('en-ID', {
-    timeZone: 'Asia/Jakarta',
-    weekday: 'long',
-  })
-}
-
-export const formatDateWithDay = (date: Date): string => {
-  const dayName = getDayName(date)
-  const formattedDate = formatDate(date)
-  return `${dayName}, ${formattedDate}`
-}
-
-export const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('en-ID', {
-    timeZone: 'Asia/Jakarta',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-}
-
-export const formatDateOnly = (date: Date): string => {
-  return date.toLocaleDateString('en-ID', {
-    timeZone: 'Asia/Jakarta',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-export const formatDateWithDayOnly = (date: Date): string => {
-  const dayName = getDayName(date)
-  const formattedDate = formatDateOnly(date)
-  return `${dayName}, ${formattedDate}`
-}
-
-export const parseAndFormatJakartaDate = (dateString: string): string => {
-  const date = new Date(dateString)
-  return formatDate(date)
-}
-
-export const parseAndFormatJakartaTime = (dateString: string): string => {
-  const date = new Date(dateString)
-  return formatTime(date)
-}
-
-export const parseAndFormatJakartaDateOnly = (dateString: string): string => {
-  const date = new Date(dateString)
-  return formatDateOnly(date)
-}
-
-export const parseAndFormatJakartaDateWithDay = (dateString: string): string => {
-  const date = new Date(dateString)
-  return formatDateWithDayOnly(date)
-}
-
-// Additional Leave System Utilities
+import { LeaveRequest } from '@/types/LeaveRequest';
 
 /**
- * Format date for leave requests (Indonesian locale, date only)
+ * Format date to Indonesian locale
  */
-export const formatLeaveDate = (dateString: string | Date): string => {
+export const formatDate = (dateString: string | Date, options?: Intl.DateTimeFormatOptions): string => {
   const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
   
-  return date.toLocaleDateString('id-ID', {
-    timeZone: 'Asia/Jakarta',
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  });
+  };
+  
+  return date.toLocaleDateString('id-ID', { ...defaultOptions, ...options });
 };
 
 /**
@@ -89,7 +23,6 @@ export const formatLeaveDate = (dateString: string | Date): string => {
 export const formatDateShort = (dateString: string | Date): string => {
   const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
   return date.toLocaleDateString('id-ID', {
-    timeZone: 'Asia/Jakarta',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -152,6 +85,88 @@ export const calculateWorkingDays = (startDate: string | Date, endDate: string |
 };
 
 /**
+ * Check if a leave request can be cancelled
+ */
+export const canCancelRequest = (request: LeaveRequest): boolean => {
+  if (request.status === 'rejected') return false;
+  if (request.status === 'approved' && new Date(request.start_date) <= new Date()) return false;
+  return true;
+};
+
+/**
+ * Check if a leave request can be edited
+ */
+export const canEditRequest = (request: LeaveRequest): boolean => {
+  if (request.status === 'approved' || request.status === 'rejected') return false;
+  if (new Date(request.start_date) <= new Date()) return false;
+  return true;
+};
+
+/**
+ * Get priority level for a leave request
+ */
+export const getRequestPriority = (request: LeaveRequest): 'high' | 'medium' | 'low' => {
+  // High priority for sick leave without proofs or pending requests older than 3 days
+  const isOldPending = request.status === 'pending' && 
+    new Date().getTime() - new Date(request.created_at).getTime() > 3 * 24 * 60 * 60 * 1000;
+  const isSickWithoutProof = request.type === 'sakit' && !request.has_proofs;
+  const isUrgent = new Date(request.start_date).getTime() - new Date().getTime() < 2 * 24 * 60 * 60 * 1000;
+  
+  if (isOldPending || isSickWithoutProof || isUrgent) {
+    return 'high';
+  }
+  
+  if (request.status === 'pending') {
+    return 'medium';
+  }
+  
+  return 'low';
+};
+
+/**
+ * Format file size in human readable format
+ */
+export const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+/**
+ * Check if a file is an image
+ */
+export const isImageFile = (mimeType: string): boolean => {
+  return mimeType.startsWith('image/');
+};
+
+/**
+ * Check if a file is a PDF
+ */
+export const isPdfFile = (mimeType: string): boolean => {
+  return mimeType === 'application/pdf';
+};
+
+/**
+ * Get display name for file type
+ */
+export const getFileTypeDisplayName = (mimeType: string): string => {
+  const typeMap: { [key: string]: string } = {
+    'image/jpeg': 'JPEG Image',
+    'image/jpg': 'JPG Image',
+    'image/png': 'PNG Image',
+    'image/gif': 'GIF Image',
+    'image/webp': 'WebP Image',
+    'application/pdf': 'PDF Document',
+  };
+  
+  return typeMap[mimeType] || mimeType;
+};
+
+/**
  * Validate date range for leave request
  */
 export const validateDateRange = (
@@ -168,7 +183,7 @@ export const validateDateRange = (
   if (start < minDate) {
     return {
       isValid: false,
-      error: `Start date cannot be before ${formatLeaveDate(minDate)}`
+      error: `Start date cannot be before ${formatDate(minDate)}`
     };
   }
   
@@ -241,49 +256,6 @@ export const getYearOptions = (yearsBack: number = 2, yearsForward: number = 1) 
   }
   
   return years;
-};
-
-/**
- * Format file size in human readable format
- */
-export const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-/**
- * Check if a file is an image
- */
-export const isImageFile = (mimeType: string): boolean => {
-  return mimeType.startsWith('image/');
-};
-
-/**
- * Check if a file is a PDF
- */
-export const isPdfFile = (mimeType: string): boolean => {
-  return mimeType === 'application/pdf';
-};
-
-/**
- * Get display name for file type
- */
-export const getFileTypeDisplayName = (mimeType: string): string => {
-  const typeMap: { [key: string]: string } = {
-    'image/jpeg': 'JPEG Image',
-    'image/jpg': 'JPG Image',
-    'image/png': 'PNG Image',
-    'image/gif': 'GIF Image',
-    'image/webp': 'WebP Image',
-    'application/pdf': 'PDF Document',
-  };
-  
-  return typeMap[mimeType] || mimeType;
 };
 
 /**

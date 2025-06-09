@@ -2,23 +2,56 @@
 
 import useSWR from 'swr';
 import axios from '@/lib/axios';
-import { 
-  LeaveQuotaResponse,
-  LeaveQuotaSummary,
-  LeaveQuota
-} from '@/types/LeaveQuota';
 import { useAuth } from '@/hooks/auth';
 
-// Hook for fetching leave quota data
-export const useLeaveQuota = (year?: number) => {
+// Updated interfaces for Laravel LeaveQuota model
+export interface LeaveQuota {
+  id: number;
+  user_id: number;
+  year: number;
+  total_quota: number;
+  used_quota: number;
+  remaining_quota: number;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    position?: string;
+  };
+}
+
+export interface LeaveQuotaResponse {
+  status: boolean;
+  message: string;
+  data: LeaveQuota[];
+}
+
+export interface LeaveQuotaSummary {
+  total: number;
+  used: number;
+  remaining: number;
+  year: number;
+  usagePercentage: number;
+}
+
+// Hook for fetching leave quota data using LeaveQuotaController
+export const useLeaveQuota = (year?: number, userId?: number) => {
   const { user } = useAuth({});
   const currentYear = year ?? new Date().getFullYear();
 
+  const queryParams = new URLSearchParams();
+  if (year) queryParams.append('year', year.toString());
+  if (userId) queryParams.append('user_id', userId.toString());
+  
+  const queryString = queryParams.toString();
+  const endpoint = `/api/leave-quotas${queryString ? `?${queryString}` : ''}`;
+
   const { data, error, mutate, isLoading } = useSWR<LeaveQuotaResponse>(
-    user ? `/api/leave-quotas?year=${currentYear}` : null,
-    () => axios.get('/api/leave-quotas', {
-      params: { year: currentYear }
-    }).then(res => res.data),
+    user ? endpoint : null,
+    () => axios.get(endpoint).then(res => res.data),
     {
       revalidateOnFocus: false,
       refreshInterval: 300000, // Refresh every 5 minutes
@@ -31,8 +64,9 @@ export const useLeaveQuota = (year?: number) => {
       return null;
     }
 
-    // Find the leave quota for the current user
-    const userQuota = data.data.find(quota => quota.user_id === user.id);
+    // Find the leave quota for the current user (or specified user)
+    const targetUserId = userId || user.id;
+    const userQuota = data.data.find(quota => quota.user_id === targetUserId);
     
     if (!userQuota) {
       return {
@@ -62,7 +96,8 @@ export const useLeaveQuota = (year?: number) => {
     if (!data?.data || !user) {
       return null;
     }
-    return data.data.find(quota => quota.user_id === user.id) || null;
+    const targetUserId = userId || user.id;
+    return data.data.find(quota => quota.user_id === targetUserId) || null;
   };
 
   return {
@@ -72,18 +107,5 @@ export const useLeaveQuota = (year?: number) => {
     isLoading,
     isError: error,
     mutate,
-  };
-};
-
-// Hook for leave quota actions (if needed for future features)
-export const useLeaveQuotaActions = () => {
-  // This can be extended later for leave request functionality
-  const applyForLeave = async () => {
-    // TODO: Implement leave application logic
-    console.log('Navigate to leave application form');
-  };
-
-  return {
-    applyForLeave,
   };
 };
