@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useState } from 'react'
-import { Bell, Menu, X, LogOut } from 'lucide-react'
+import { Bell, Menu, X, LogOut, User } from 'lucide-react'
 
 import { UserType } from '@/types/User'
 import { useAuth } from '@/hooks/auth'
@@ -36,7 +36,7 @@ const Navigation = ({ user }: { user: UserType }) => {
                 tabIndex={0}
                 className="flex items-center space-x-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors">
                 <img
-                  src={'/api/placeholder/32/32'} //user?.avatar ??
+                  src={user?.photo_profile_url ?? '/33.png'}
                   alt="Profile"
                   className="h-8 w-8 rounded-full object-cover border-2 border-gray-200"
                 />
@@ -73,12 +73,24 @@ const Navigation = ({ user }: { user: UserType }) => {
                   />
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-20">
                     <div className="py-1">
-                      <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900">
-                          {user?.name}
-                        </p>
-                        <p className="text-sm text-gray-500">{user?.email}</p>
-                      </div>
+                      {/* Profile Button */}
+                      <Link
+                        href="/dashboard/profile"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors block">
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-gray-500" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">
+                              {user?.name}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {user?.email}
+                            </p>
+                          </div>
+                        </div>
+                      </Link>
+
                       <button
                         onClick={logout}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2 transition-colors">
@@ -111,9 +123,12 @@ const Navigation = ({ user }: { user: UserType }) => {
           <div className="md:hidden border-t border-gray-200 bg-white">
             <div className="px-2 pt-2 pb-3 space-y-1">
               {/* User Info */}
-              <div className="flex items-center px-3 py-3 bg-gray-50 rounded-lg">
+              <Link
+                href="/dashboard/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center px-3 py-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <img
-                  src={'/api/placeholder/40/40'} //user?.avatar ??
+                  src={user?.photo_profile_url ?? '/33.png'}
                   alt="Profile"
                   className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
                 />
@@ -123,8 +138,11 @@ const Navigation = ({ user }: { user: UserType }) => {
                   </div>
                   <div className="text-sm text-gray-500">{user?.email}</div>
                 </div>
-                <Bell className="h-5 w-5 text-gray-400" />
-              </div>
+                <div className="flex items-center space-x-2">
+                  <User className="h-5 w-5 text-gray-400" />
+                  <Bell className="h-5 w-5 text-gray-400" />
+                </div>
+              </Link>
 
               {/* Navigation Links */}
               <Link

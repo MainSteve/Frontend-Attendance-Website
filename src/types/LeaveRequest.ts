@@ -1,12 +1,6 @@
-// src/types/LeaveRequest.ts
+import { UserType } from './User';
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  position?: string;
-}
+export type LeaveRequestStatus = 'pending' | 'approved' | 'rejected';
 
 export interface LeaveRequestProof {
   id: number;
@@ -24,7 +18,7 @@ export interface LeaveRequestProof {
   updated_at: string;
   url: string;
   human_readable_size: string;
-  verifier?: User;
+  verifier?: UserType;
 }
 
 export interface LeaveRequest {
@@ -34,12 +28,12 @@ export interface LeaveRequest {
   reason?: string;
   start_date: string;
   end_date: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: LeaveRequestStatus;
   created_at: string;
   duration: number;
   has_proofs: boolean;
   proofs_count: number;
-  user: User;
+  user: UserType;
   proofs: LeaveRequestProof[];
 }
 
@@ -64,7 +58,7 @@ export interface LeaveRequestDetailResponse {
 }
 
 export interface LeaveQuotaSummaryData {
-  user: User;
+  user: UserType;
   year: number;
   quota: {
     total: number;
@@ -105,7 +99,7 @@ export interface CreateLeaveRequestData {
   proofs?: File[];
   proof_descriptions?: string[];
   user_id?: number; // For admin
-  status?: 'pending' | 'approved' | 'rejected'; // For admin
+  status?: LeaveRequestStatus; // For admin
 }
 
 export interface AddProofsData {
@@ -114,7 +108,7 @@ export interface AddProofsData {
 }
 
 export interface UpdateStatusData {
-  status: 'pending' | 'approved' | 'rejected';
+  status: LeaveRequestStatus;
 }
 
 export interface ProofUrlResponse {

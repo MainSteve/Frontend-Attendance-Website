@@ -155,21 +155,3 @@ export const useAnnouncements = () => {
     isExpired,
   };
 };
-
-// Hook for announcement actions (if needed for future features)
-export const useAnnouncementActions = () => {
-  const markAsRead = async (announcementId: number) => {
-    // TODO: Implement mark as read functionality
-    console.log('Mark as read:', announcementId);
-  };
-
-  const shareAnnouncement = async (announcementId: number) => {
-    // TODO: Implement share functionality
-    console.log('Share announcement:', announcementId);
-  };
-
-  return {
-    markAsRead,
-    shareAnnouncement,
-  };
-};

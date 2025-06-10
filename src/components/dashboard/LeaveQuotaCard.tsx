@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { formatDateForInput, getTodayDate, calculateDuration, validateDateRange } from '@/utils/dateConverter';
+import { getTodayDate, calculateDuration, validateDateRange } from '@/utils/dateConverter';
 import ImageUploader from '@/components/common/ImageUploader';
 
 interface ProofFile {

@@ -1,16 +1,4 @@
-// src/types/LeaveQuota.ts
-
-export interface LeaveQuotaUser {
-  id: number;
-  name: string;
-  email: string;
-  email_verified_at: string | null;
-  created_at: string;
-  updated_at: string;
-  role: 'admin' | 'employee';
-  position: string | null;
-  department_id: number | null;
-}
+import { UserType } from "./User"; 
 
 export interface LeaveQuota {
   id: number;
@@ -21,7 +9,7 @@ export interface LeaveQuota {
   remaining_quota: number;
   created_at: string;
   updated_at: string;
-  user: LeaveQuotaUser;
+  user: UserType;
 }
 
 export interface LeaveQuotaResponse {
