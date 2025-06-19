@@ -19,6 +19,7 @@ interface AttendanceReportSummaryProps {
   month: number
   year: number
   isDashboard?: boolean // Add this new prop
+  userId?: number
 }
 
 const AttendanceReportSummary: React.FC<AttendanceReportSummaryProps> = ({
@@ -27,10 +28,13 @@ const AttendanceReportSummary: React.FC<AttendanceReportSummaryProps> = ({
   month,
   year,
   isDashboard = false, // Add default value
+  userId,
 }) => {
   const { summary, user, isLoading, isError } = useAttendanceReport({
     start_date: startDate,
     end_date: endDate,
+    user_id: userId,
+    enabled: true,
   })
 
   if (isLoading) {

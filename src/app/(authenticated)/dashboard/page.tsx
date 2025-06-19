@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useEffect, useState } from 'react' // ← ADD useState and useEffect here
+import React, { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/hooks/auth'
 import { useDepartments } from '@/hooks/users'
 import { formatDateWithDayOnly } from '@/utils/dateConverter'
 import { toTitleCase } from '@/utils/stringUtils'
-import { useSearchParams } from 'next/navigation' // ← ADD this import
+import { useSearchParams, useRouter } from 'next/navigation'
 
 // Import all the new components
 import AttendanceSummaryCard from '@/components/dashboard/AttendanceSummaryCard'
@@ -14,12 +14,20 @@ import ClockStatusCard from '@/components/dashboard/ClockStatusCard'
 import LeaveQuotaCard from '@/components/dashboard/LeaveQuotaCard'
 import WeeklyScheduleCard from '@/components/dashboard/WeeklyScheduleCard'
 import AnnouncementsCard from '@/components/dashboard/AnnouncementsCard'
-import AttendanceRecordDetailModal from '@/components/attendance/AttendanceRecordDetailModal' // ← ADD this import
+import AttendanceRecordDetailModal from '@/components/attendance/AttendanceRecordDetailModal'
 
 const EmployeeDashboard = () => {
+  const router = useRouter()
   const { user, isLoading: userLoading } = useAuth({})
   const { departments, isLoading: departmentsLoading } = useDepartments()
-  const searchParams = useSearchParams() // ← ADD this hook
+  const searchParams = useSearchParams()
+
+  // Add useEffect for admin check
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      router.replace('/admin/menus')
+    }
+  }, [user, router])
 
   // ← ADD QR detection state variables here
   const [showQrAttendanceModal, setShowQrAttendanceModal] = useState(false)
@@ -100,6 +108,11 @@ const EmployeeDashboard = () => {
         </div>
       </div>
     )
+  }
+
+  // Only render dashboard for non-admin users
+  if (user.role === 'admin') {
+    return null // Return null while redirecting
   }
 
   return (

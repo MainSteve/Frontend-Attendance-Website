@@ -239,6 +239,7 @@ export interface UseAttendanceListParams {
   sort_direction?: 'asc' | 'desc'
   per_page?: number
   page?: number
+  user_id?: number // Optional user ID for admin access
 
   // Hook-specific options
   enabled?: boolean // Whether to automatically fetch
@@ -644,25 +645,6 @@ export interface AttendanceQueryParams {
   page?: number
 }
 
-export interface UseAttendanceListParams {
-  // All query params are optional
-  days?: number
-  from_date?: string
-  to_date?: string
-  date?: string
-  clock_type?: 'in' | 'out'
-  method?: 'manual' | 'qr_code'
-  location?: string
-  sort_by?: SortByField
-  sort_direction?: 'asc' | 'desc'
-  per_page?: number
-  page?: number
-
-  // Hook-specific options
-  enabled?: boolean // Whether to automatically fetch
-  revalidateOnFocus?: boolean
-}
-
 export interface UseAttendanceSummaryParams {
   month?: number
   year?: number
@@ -861,4 +843,23 @@ export interface AttendanceReportErrorResponse {
     filter_location?: string[]
     user_id?: string[]
   }
+}
+
+export interface AttendanceReportParams {
+  start_date: string
+  end_date: string
+  user_id?: number // Add optional user_id for admin access
+}
+
+export interface AttendanceListParams {
+  from_date?: string
+  to_date?: string
+  page?: number
+  per_page?: number
+  sort_by?: string
+  sort_direction?: 'asc' | 'desc'
+  clock_type?: 'in' | 'out'
+  method?: 'manual' | 'qr_code'
+  search?: string
+  user_id?: number
 }

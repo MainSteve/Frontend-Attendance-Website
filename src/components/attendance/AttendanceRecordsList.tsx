@@ -20,12 +20,14 @@ import AttendanceRecordDetailModal from './AttendanceRecordDetailModal'
 interface AttendanceRecordsListProps {
   startDate: string
   endDate: string
+  userId?: number // Add this new prop for admin usage
   onRecordClick?: (record: AttendanceRecord) => void
 }
 
 const AttendanceRecordsList: React.FC<AttendanceRecordsListProps> = ({
   startDate,
   endDate,
+  userId, // Add this
   onRecordClick,
 }) => {
   const [currentPage, setCurrentPage] = useState(1)
@@ -44,9 +46,12 @@ const AttendanceRecordsList: React.FC<AttendanceRecordsListProps> = ({
     per_page: 20,
     sort_by: 'created_at',
     sort_direction: 'desc',
+    user_id: userId, // Pass userId to the hook
     ...(filterType !== 'all' && { clock_type: filterType }),
     ...(filterMethod !== 'all' && { method: filterMethod }),
     ...(searchTerm && { search: searchTerm }),
+    ...userId && { user_id: userId }, // Ensure userId is included if provided
+    enabled: true,
   })
 
   const handleRecordClick = (record: AttendanceRecord) => {

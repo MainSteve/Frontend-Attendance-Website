@@ -9,6 +9,8 @@ import {
   AttendanceSummary,
   ClockStatus,
   AttendanceRecord,
+  AttendanceReportParams,
+  AttendanceListParams,
   AttendanceQueryParams,
   UseAttendanceListParams,
   UseAttendanceSummaryParams,
@@ -24,6 +26,7 @@ import {
   DeleteTaskLogApiResponse,
   ApiResponse,
 } from '@/types/Attendance'
+import { UserType } from '@/types/User'
 import { formatTime } from '@/utils/dateConverter'
 
 // Hook for today's attendance and clock status
@@ -807,3 +810,4 @@ export const useRecentAttendance = (days = 7) => {
     per_page: 50,
   })
 }
+

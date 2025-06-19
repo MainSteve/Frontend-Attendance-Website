@@ -7,12 +7,17 @@ import { Department } from '@/types/Department'
 // Hook for users list
 export const useUsers = () => {
   const { data, error, mutate } = useSWR<UserType[]>('/api/users', () =>
-    axios.get('/api/users').then(res => res.data),
+    axios.get('/api/users').then(res => res.data.data ?? res.data),
   )
 
-  const createUser = async (userData: Partial<UserType>) => {
+  const createUser = async (userData: Partial<UserType> | FormData) => {
     try {
-      const response = await axios.post('/api/users', userData)
+      const config =
+        userData instanceof FormData
+          ? { headers: { 'Content-Type': 'multipart/form-data' } }
+          : {}
+
+      const response = await axios.post('/api/users', userData, config)
       mutate() // Revalidate the cache
       return response.data
     } catch (error) {
@@ -21,11 +26,27 @@ export const useUsers = () => {
     }
   }
 
-  const updateUser = async (id: number, userData: Partial<UserType>) => {
+  const updateUser = async (
+    id: number,
+    userData: Partial<UserType> | FormData,
+  ) => {
     try {
-      const response = await axios.put(`/api/users/${id}`, userData)
-      mutate() // Revalidate the cache
-      return response.data
+      const config =
+        userData instanceof FormData
+          ? { headers: { 'Content-Type': 'multipart/form-data' } }
+          : {}
+
+      // For FormData, we need to use POST with _method field for Laravel
+      if (userData instanceof FormData) {
+        userData.append('_method', 'PUT')
+        const response = await axios.post(`/api/users/${id}`, userData, config)
+        mutate() // Revalidate the cache
+        return response.data
+      } else {
+        const response = await axios.put(`/api/users/${id}`, userData, config)
+        mutate() // Revalidate the cache
+        return response.data
+      }
     } catch (error) {
       console.error(error)
       throw error
@@ -57,7 +78,10 @@ export const useUsers = () => {
 export const useUser = (id: number | null) => {
   const { data, error, mutate } = useSWR<UserType>(
     id ? `/api/users/${id}` : null,
-    id ? () => axios.get(`/api/users/${id}`).then(res => res.data) : null,
+    id
+      ? () =>
+          axios.get(`/api/users/${id}`).then(res => res.data.data ?? res.data)
+      : null,
   )
 
   return {
@@ -71,14 +95,27 @@ export const useUser = (id: number | null) => {
 // Hook for current user profile
 export const useProfile = () => {
   const { data, error, mutate } = useSWR<UserType>('/api/user', () =>
-    axios.get('/api/user').then(res => res.data),
+    axios.get('/api/user').then(res => res.data.data ?? res.data),
   )
 
-  const updateProfile = async (userData: Partial<UserType>) => {
+  const updateProfile = async (userData: Partial<UserType> | FormData) => {
     try {
-      const response = await axios.put('/api/user', userData)
-      mutate() // Revalidate the cache
-      return response.data
+      const config =
+        userData instanceof FormData
+          ? { headers: { 'Content-Type': 'multipart/form-data' } }
+          : {}
+
+      // For FormData, we need to use POST with _method field for Laravel
+      if (userData instanceof FormData) {
+        userData.append('_method', 'PUT')
+        const response = await axios.post('/api/user', userData, config)
+        mutate() // Revalidate the cache
+        return response.data
+      } else {
+        const response = await axios.put('/api/user', userData, config)
+        mutate() // Revalidate the cache
+        return response.data
+      }
     } catch (error) {
       console.error(error)
       throw error
@@ -186,7 +223,7 @@ export const useUserPhotoProfile = (userId: number) => {
 // Hook for departments
 export const useDepartments = () => {
   const { data, error, mutate } = useSWR<Department[]>('/api/departments', () =>
-    axios.get('/api/departments').then(res => res.data),
+    axios.get('/api/departments').then(res => res.data.data ?? res.data),
   )
 
   const createDepartment = async (departmentData: { name: string }) => {
