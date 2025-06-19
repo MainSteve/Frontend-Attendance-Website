@@ -6,9 +6,63 @@ import {
   WeeklyScheduleDay,
   DayOfWeek,
   WorkingHourSchedule,
-  Holiday
+  Holiday,
+  User,
+  UsersResponse,
+  WorkingHoursListResponse,
+  CreateWorkingHoursPayload,
+  UpdateWorkingHoursPayload
 } from '@/types/WorkingHours';
 import { useAuth } from '@/hooks/auth';
+import { useState } from 'react';
+
+// Hook for fetching users list (for admin)
+export const useUsers = () => {
+  const { data, error, mutate, isLoading } = useSWR<UsersResponse>(
+    '/api/users',
+    () => axios.get('/api/users').then(res => res.data),
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  return {
+    users: data?.data || [],
+    isLoading,
+    isError: error,
+    mutate,
+  };
+};
+
+// Hook for fetching working hours list (for admin)
+export const useWorkingHoursList = (filters?: {
+  user_id?: number;
+  day_of_week?: string;
+  per_page?: number;
+}) => {
+  const queryParams = new URLSearchParams();
+  if (filters?.user_id) queryParams.append('user_id', filters.user_id.toString());
+  if (filters?.day_of_week) queryParams.append('day_of_week', filters.day_of_week);
+  if (filters?.per_page) queryParams.append('per_page', filters.per_page.toString());
+
+  const queryString = queryParams.toString();
+  const url = `/api/working-hours${queryString ? `?${queryString}` : ''}`;
+
+  const { data, error, mutate, isLoading } = useSWR<WorkingHoursListResponse>(
+    url,
+    () => axios.get(url).then(res => res.data),
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  return {
+    workingHours: data?.data || null,
+    isLoading,
+    isError: error,
+    mutate,
+  };
+};
 
 // Hook for fetching user's working hours
 export const useWorkingHours = (userId?: number) => {
@@ -30,6 +84,66 @@ export const useWorkingHours = (userId?: number) => {
     isLoading,
     isError: error,
     mutate,
+  };
+};
+
+// Hook for managing working hours (create/update/delete)
+export const useWorkingHoursManager = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const createWorkingHours = async (payload: CreateWorkingHoursPayload) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axios.post('/api/working-hours', payload);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to create working hours';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserWorkingHours = async (userId: number, payload: UpdateWorkingHoursPayload) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axios.patch(`/api/working-hours/user/${userId}`, payload);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to update working hours';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const deleteWorkingHour = async (id: number) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axios.delete(`/api/working-hours/${id}`);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete working hour';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    createWorkingHours,
+    updateUserWorkingHours,
+    deleteWorkingHour,
+    isLoading,
+    error,
+    clearError: () => setError(null),
   };
 };
 
