@@ -97,7 +97,7 @@ const LeaveRequestsPage = () => {
 
   const handleViewProof = async (proofId: number) => {
     try {
-      const response = await getProofUrl(proofId, 120); // 2 hours
+      const response = await getProofUrl(proofId); // 2 hours
       window.open(response.data.url, '_blank');
     } catch (error) {
       console.error('Error getting proof URL:', error);
@@ -502,7 +502,7 @@ const LeaveRequestsPage = () => {
                           size="sm"
                           onClick={() => handleViewProof(proof.id)}
                         >
-                          <Download className="h-4 w-4 mr-1" />
+                          <Eye className="h-4 w-4 mr-1" />
                           Lihat
                         </Button>
                       </div>
