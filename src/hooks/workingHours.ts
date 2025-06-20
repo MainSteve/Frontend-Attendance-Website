@@ -164,7 +164,7 @@ export const useWeeklyHolidays = (startDate: Date, endDate: Date) => {
     }).then(res => res.data),
     {
       revalidateOnFocus: false,
-      refreshInterval: 3600000, // Refresh every hour (holidays don't change often)
+      refreshInterval: 86400000, // Refresh every hour (holidays don't change often)
     }
   );
 

@@ -9,7 +9,8 @@ import {
   Plus, 
   User,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import {
   Dialog,
@@ -78,7 +79,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
   });
 
   // Filter employees based on search term
-  const filteredEmployees = users?.filter((employee) => {
+  const filteredEmployees = Array.isArray(users) ? users.filter((employee) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       employee.name.toLowerCase().includes(searchLower) ||
@@ -86,7 +87,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
       employee.position.toLowerCase().includes(searchLower) ||
       employee.department?.name.toLowerCase().includes(searchLower)
     );
-  }) || [];
+  }) : [];
 
   // Reset form data
   const resetForm = () => {
@@ -242,10 +243,16 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
     <div>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800">Daftar Karyawan</h1>
-        <Button onClick={handleCreate} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Tambah Karyawan
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => mutate()} variant="outline" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={handleCreate} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Tambah Karyawan
+          </Button>
+        </div>
       </div>
       
       <div className="bg-white rounded-lg shadow">

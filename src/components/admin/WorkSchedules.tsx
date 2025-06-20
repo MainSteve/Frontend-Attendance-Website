@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUsers, useWorkingHours, useWorkingHoursManager } from '@/hooks/workingHours';
 import { LocalScheduleState, DayOfWeek, SchedulePayload } from '@/types/WorkingHours';
-import { AlertCircle, CheckCircle, Loader2, Save, RotateCcw } from 'lucide-react';
+import { AlertCircle, CheckCircle, Loader2, Save, RotateCcw, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const WorkSchedules = () => {
@@ -31,7 +31,7 @@ const WorkSchedules = () => {
   };
 
   // Hooks
-  const { users, isLoading: usersLoading, isError: usersError } = useUsers();
+  const { users, isLoading: usersLoading, isError: usersError, mutate: mutateUsers } = useUsers();
   const { 
     workingHoursData, 
     isLoading: scheduleLoading, 
@@ -233,8 +233,18 @@ const WorkSchedules = () => {
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Jadwal Kerja</h1>
-      
       <div className="bg-white rounded-lg shadow p-6">
+        {/* Refresh Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => mutateUsers()}
+            className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </button>
+        </div>
+
         {/* Employee Selection */}
         <div className="mb-6">
           <label htmlFor="employee-select" className="block text-sm font-medium text-gray-700 mb-2">Pilih Karyawan</label>
@@ -247,7 +257,7 @@ const WorkSchedules = () => {
             <option value="">
               {usersLoading ? 'Memuat karyawan...' : 'Pilih karyawan...'}
             </option>
-            {users.map((user) => (
+            {Array.isArray(users) && users.map((user) => (
               <option key={user.id} value={user.id.toString()}>
                 {user.name}
               </option>

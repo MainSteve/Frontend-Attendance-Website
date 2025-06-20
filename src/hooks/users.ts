@@ -64,7 +64,7 @@ export const useUsers = () => {
   }
 
   return {
-    users: data,
+    users: Array.isArray(data) ? data : [],
     isLoading: !error && !data,
     isError: error,
     createUser,
