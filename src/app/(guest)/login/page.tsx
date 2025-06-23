@@ -177,12 +177,18 @@ const LoginPage = () => {
             </label>
           </div>
 
-          <div className="flex items-center justify-end mt-4">
+          <div className="flex items-center justify-end mt-4 space-x-2">
             <button
               type="submit"
               className="ml-3 inline-flex items-center px-4 py-2 bg-gray-800 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring ring-gray-300 disabled:opacity-25 transition ease-in-out duration-150">
               Login
             </button>
+            <Link
+              href="/forgot-password"
+              className="text-sm text-blue-600 hover:underline ml-2"
+            >
+              Forgot Password?
+            </Link>
           </div>
         </Form>
       </Formik>

@@ -3,6 +3,19 @@ import axios from '@/lib/axios'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
+// Type definitions
+interface User {
+  id: number
+  name: string
+  email: string
+  email_verified_at?: string
+  role?: string
+  position?: string
+  department_id?: number | null
+  created_at?: string
+  updated_at?: string
+}
+
 interface RegisterData {
   name: string
   email: string
@@ -18,34 +31,66 @@ interface LoginData {
   password: string
 }
 
+interface ForgotPasswordData {
+  email: string
+}
+
+interface ResetPasswordData {
+  token: string
+  email: string
+  password: string
+  password_confirmation: string
+}
+
+interface UseAuthOptions {
+  middleware?: 'guest' | 'auth' | string
+  redirectIfAuthenticated?: string
+}
+
+interface AuthResponse {
+  token?: string
+  user?: User
+  message?: string
+  success?: boolean
+}
+
+interface UseAuthReturn {
+  user: User | undefined
+  register: (data: RegisterData) => Promise<AuthResponse | undefined>
+  login: (data: LoginData) => Promise<AuthResponse | undefined>
+  logout: () => Promise<void>
+  forgotPassword: (data: ForgotPasswordData) => Promise<AuthResponse>
+  resetPassword: (data: ResetPasswordData) => Promise<AuthResponse>
+  getUserRole: () => string | null
+  isLoading: boolean
+  error: any
+  mutate: any
+}
+
 export const useAuth = ({
   middleware,
   redirectIfAuthenticated,
-}: {
-  middleware?: string
-  redirectIfAuthenticated?: string
-}) => {
+}: UseAuthOptions = {}): UseAuthReturn => {
   const router = useRouter()
 
   // Store token in localStorage
-  const storeToken = (token: string) => {
+  const storeToken = (token: string): void => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token)
-
       // Set the token in axios headers for future requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
     }
   }
 
   // Store user in localStorage
-  const storeUser = (user: any) => {
+  const storeUser = (user: User): void => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('user', JSON.stringify(user))
     }
   }
 
   // Get token from localStorage
-  const getToken = () => {
+  const getToken = (): string | null => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('token')
     }
@@ -66,7 +111,7 @@ export const useAuth = ({
     mutate,
     isLoading: swrIsLoading,
     isValidating,
-  } = useSWR(
+  } = useSWR<User>(
     '/api/user',
     () =>
       axios
@@ -89,14 +134,16 @@ export const useAuth = ({
   )
 
   // Calculate loading state
-  const isLoading = swrIsLoading || isValidating
+  const isLoading: boolean = swrIsLoading || isValidating
 
   // Register functionality
-  const register = async (data: RegisterData) => {
+  const register = async (
+    data: RegisterData,
+  ): Promise<AuthResponse | undefined> => {
     try {
-      const response = await axios.post('/api/register', data)
+      const response = await axios.post<AuthResponse>('/api/register', data)
 
-      // If the API returns a token directly (depends on your backend implementation)
+      // If the API returns a token directly
       if (response.data.token) {
         storeToken(response.data.token)
         if (response.data.user) {
@@ -105,15 +152,17 @@ export const useAuth = ({
       }
 
       await mutate()
-      return response
+      return response.data
     } catch (error) {
-      console.error(error)
+      console.error('Registration error:', error)
+      throw error
     }
   }
 
-  const login = async (data: LoginData) => {
+  // Login functionality
+  const login = async (data: LoginData): Promise<AuthResponse | undefined> => {
     try {
-      const response = await axios.post('/api/login', data)
+      const response = await axios.post<AuthResponse>('/api/login', data)
 
       // Store the token and user data
       if (response.data.token) {
@@ -124,13 +173,57 @@ export const useAuth = ({
       }
 
       await mutate()
-      return response
+      return response.data
     } catch (error) {
-      console.error(error)
+      console.error('Login error:', error)
+      throw error
     }
   }
 
-  const logout = async () => {
+  // Forgot password functionality
+  const forgotPassword = async (
+    data: ForgotPasswordData,
+  ): Promise<AuthResponse> => {
+    try {
+      const response = await axios.post<AuthResponse>(
+        '/api/forgot-password',
+        data,
+      )
+      return response.data
+    } catch (error) {
+      console.error('Forgot password error:', error)
+      throw error
+    }
+  }
+
+  // Reset password functionality
+  const resetPassword = async (
+    data: ResetPasswordData,
+  ): Promise<AuthResponse> => {
+    try {
+      const response = await axios.post<AuthResponse>(
+        '/api/reset-password',
+        data,
+      )
+
+      // Optionally store token if provided (for immediate login after reset)
+      if (response.data.token) {
+        storeToken(response.data.token)
+        if (response.data.user) {
+          storeUser(response.data.user)
+        }
+        await mutate()
+      }
+
+      return response.data
+    } catch (error) {
+      console.error('Reset password error:', error)
+      throw error
+    }
+  }
+
+  // Logout functionality
+  const logout = async (): Promise<void> => {
     try {
       await axios.post('/api/logout')
 
@@ -160,7 +253,7 @@ export const useAuth = ({
   // Utility to get the current user role
   const getUserRole = (): string | null => {
     if (user) {
-      return user.role
+      return user.role ?? null
     }
 
     // Try to get from localStorage as fallback
@@ -168,10 +261,10 @@ export const useAuth = ({
       const storedUser = localStorage.getItem('user')
       if (storedUser) {
         try {
-          const parsedUser = JSON.parse(storedUser)
+          const parsedUser: User = JSON.parse(storedUser)
           return parsedUser.role ?? null
         } catch (e) {
-          console.error(e)
+          console.error('Error parsing stored user:', e)
         }
       }
     }
@@ -194,6 +287,8 @@ export const useAuth = ({
     register,
     login,
     logout,
+    forgotPassword,
+    resetPassword,
     getUserRole,
     isLoading,
     error,
