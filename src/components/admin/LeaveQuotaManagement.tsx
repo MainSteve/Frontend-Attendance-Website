@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useUsers } from '@/hooks/users'
-import { useLeaveQuotas, useLeaveQuota } from '@/hooks/leaveQuota'
+import { useLeaveQuotas } from '@/hooks/leaveQuota'
 import {
   UserPlus,
   Calendar,
@@ -12,7 +12,7 @@ import {
   Users,
   RefreshCw,
 } from 'lucide-react'
-import { formatLeaveDate, getYearOptions } from '@/utils/dateConverter'
+import { getYearOptions } from '@/utils/dateConverter'
 
 interface QuotaFormData {
   user_id: string
@@ -49,6 +49,7 @@ const LeaveQuotaManagement = () => {
     type: 'success' | 'error'
     text: string
   } | null>(null)
+  const [editedTotalQuota, setEditedTotalQuota] = useState<number | null>(null)
 
   // Hooks
   const { users, isLoading: usersLoading, mutate: mutateUsers } = useUsers()
@@ -102,7 +103,7 @@ const LeaveQuotaManagement = () => {
       })
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || 'Failed to create leave quota'
+        error.response?.data?.message ?? 'Failed to create leave quota'
       showMessage('error', errorMessage)
     } finally {
       setIsCreating(false)
@@ -121,7 +122,7 @@ const LeaveQuotaManagement = () => {
       showMessage('success', 'Leave quota updated successfully')
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || 'Failed to update leave quota'
+        error.response?.data?.message ?? 'Failed to update leave quota'
       showMessage('error', errorMessage)
     } finally {
       setIsUpdating(false)
@@ -136,7 +137,7 @@ const LeaveQuotaManagement = () => {
       showMessage('success', result.message)
     } catch (error: any) {
       const errorMessage =
-        error.response?.data?.message || 'Failed to generate yearly quotas'
+        error.response?.data?.message ?? 'Failed to generate yearly quotas'
       showMessage('error', errorMessage)
     } finally {
       setIsGenerating(false)
@@ -155,6 +156,15 @@ const LeaveQuotaManagement = () => {
   }
 
   const stats = getUserStats()
+
+  // Update editedTotalQuota when selectedUserQuota changes
+  useEffect(() => {
+    if (selectedUserQuota) {
+      setEditedTotalQuota(selectedUserQuota.total_quota);
+    } else {
+      setEditedTotalQuota(null);
+    }
+  }, [selectedUserQuota]);
 
   return (
     <div className="space-y-6">
@@ -369,11 +379,8 @@ const LeaveQuotaManagement = () => {
                   type="number"
                   min={selectedUserQuota.used_quota}
                   max="365"
-                  value={selectedUserQuota.total_quota}
-                  onChange={e => {
-                    // Update the quota in the local state
-                    mutate()
-                  }}
+                  value={editedTotalQuota ?? ''}
+                  onChange={e => setEditedTotalQuota(Number(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -417,8 +424,25 @@ const LeaveQuotaManagement = () => {
             </div>
 
             <button
-              onClick={handleUpdateQuota}
-              disabled={isUpdating}
+              onClick={async () => {
+                if (editedTotalQuota !== null && editedTotalQuota !== selectedUserQuota.total_quota) {
+                  setIsUpdating(true);
+                  try {
+                    await updateLeaveQuota(selectedUserQuota.id, {
+                      total_quota: editedTotalQuota,
+                    });
+                    showMessage('success', 'Leave quota updated successfully');
+                    mutate();
+                  } catch (error: any) {
+                    const errorMessage =
+                      error.response?.data?.message ?? 'Failed to update leave quota';
+                    showMessage('error', errorMessage);
+                  } finally {
+                    setIsUpdating(false);
+                  }
+                }
+              }}
+              disabled={isUpdating || editedTotalQuota === null || editedTotalQuota === selectedUserQuota.total_quota}
               className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               {isUpdating ? 'Updating...' : 'Update Jatah Cuti'}
             </button>

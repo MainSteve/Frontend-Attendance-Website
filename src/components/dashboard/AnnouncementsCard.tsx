@@ -16,7 +16,7 @@ import {
   Info,
   ExternalLink,
 } from 'lucide-react'
-import { useAnnouncements, useAnnouncementActions } from '@/hooks/announcements'
+import { useAnnouncements } from '@/hooks/announcements'
 import { formatDateOnly } from '@/utils/dateConverter'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'

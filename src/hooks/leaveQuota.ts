@@ -108,7 +108,7 @@ export const useLeaveQuotas = (year?: number, userId?: number) => {
 }
 
 // Hook for fetching a single leave quota
-export const useLeaveQuota = (id: number | null) => {
+export const useLeaveQuota = (id: number | null = null) => {
   const { data, error, mutate } = useSWR<{
     status: boolean
     message: string

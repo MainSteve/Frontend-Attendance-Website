@@ -7,8 +7,6 @@ import { useDepartments } from '@/hooks/users'
 import { formatDateWithDayOnly } from '@/utils/dateConverter'
 import { toTitleCase } from '@/utils/stringUtils'
 import { useSearchParams, useRouter } from 'next/navigation'
-
-// Import all the new components
 import AttendanceSummaryCard from '@/components/dashboard/AttendanceSummaryCard'
 import ClockStatusCard from '@/components/dashboard/ClockStatusCard'
 import LeaveQuotaCard from '@/components/dashboard/LeaveQuotaCard'
@@ -110,15 +108,14 @@ const EmployeeDashboard = () => {
     )
   }
 
-  // Only render dashboard for non-admin users
   if (user.role === 'admin') {
-    return null // Return null while redirecting
+    return null
   }
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* ← ADD QR Error Message here (BEFORE Welcome Section) */}
+        {/* ADD QR Error Message here (BEFORE Welcome Section) */}
         {qrError && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center justify-between">
@@ -158,7 +155,7 @@ const EmployeeDashboard = () => {
           </div>
         )}
 
-        {/* ← ADD QR Success Message here (BEFORE Welcome Section) */}
+        {/* ADD QR Success Message here (BEFORE Welcome Section) */}
         {showQrAttendanceModal && qrAttendanceId && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <div className="flex items-center">

@@ -37,7 +37,6 @@ export interface QrGeneratorSettings {
   location: string
   expiry_minutes: number
   auto_regenerate: boolean
-  auto_regenerate_interval: number // seconds
 }
 
 export interface QrCodeDisplayData {

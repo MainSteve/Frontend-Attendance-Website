@@ -34,7 +34,6 @@ export const useQrCodeGenerator = () => {
     location: 'Office Main Entrance',
     expiry_minutes: 10,
     auto_regenerate: false,
-    auto_regenerate_interval: 30, // 30 seconds after scan
   })
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
@@ -267,20 +266,11 @@ export const useQrCodeGenerator = () => {
     if (autoRegenerateRef.current) {
       clearTimeout(autoRegenerateRef.current)
     }
-
-    console.log(
-      `Scheduling auto-regenerate in ${settings.auto_regenerate_interval} seconds...`,
-    )
-
     autoRegenerateRef.current = setTimeout(() => {
       console.log('Auto-regenerating QR code...')
       generateQrCode()
-    }, settings.auto_regenerate_interval * 1000)
-  }, [
-    generateQrCode,
-    settings.auto_regenerate,
-    settings.auto_regenerate_interval,
-  ])
+    })
+  }, [generateQrCode, settings.auto_regenerate])
 
   // Process QR Code scan (for manual checking)
   const processQrScan = useCallback(

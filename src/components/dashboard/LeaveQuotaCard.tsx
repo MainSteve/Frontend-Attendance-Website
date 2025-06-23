@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { Calendar, Loader2, Plus, Info, FileText, ArrowRight, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useLeaveQuota } from '@/hooks/leaveQuota';
+import { useMyLeaveQuota } from '@/hooks/leaveQuota';
 import { useLeaveRequestActions } from '@/hooks/leaveRequest';
 import { Button } from '@/components/ui/button';
 import { toast } from 'react-hot-toast';
@@ -42,7 +42,7 @@ interface ProofFile {
 }
 
 const LeaveQuotaCard = () => {
-  const { leaveQuotaSummary, isLoading, isError, mutate } = useLeaveQuota();
+  const { leaveQuotaSummary, isLoading, isError, mutate } = useMyLeaveQuota();
   const { createLeaveRequest } = useLeaveRequestActions();
   const router = useRouter();
   

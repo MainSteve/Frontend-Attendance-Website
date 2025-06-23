@@ -67,6 +67,7 @@ const AnnouncementsManagement = () => {
     type: 'success' | 'error'
     text: string
   } | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Hooks
   const {
@@ -226,6 +227,15 @@ const AnnouncementsManagement = () => {
       department_ids: [],
     }))
   }
+
+  // Filter announcements based on search term
+  const filteredAnnouncements = announcements.filter(announcement => {
+    const lowerSearch = searchTerm.toLowerCase()
+    return (
+      announcement.title.toLowerCase().includes(lowerSearch) ||
+      announcement.content.toLowerCase().includes(lowerSearch)
+    )
+  })
 
   return (
     <div className="space-y-6">
@@ -696,10 +706,20 @@ const AnnouncementsManagement = () => {
 
       {/* Announcements List */}
       <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <h2 className="text-lg font-semibold text-gray-800">
             Daftar Pengumuman
           </h2>
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Cari pengumuman..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10 pr-3 py-2 border border-gray-300 rounded-lg w-full focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
         </div>
 
         {announcementsLoading ? (
@@ -707,7 +727,7 @@ const AnnouncementsManagement = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-500">Loading...</p>
           </div>
-        ) : announcements.length > 0 ? (
+        ) : filteredAnnouncements.length > 0 ? (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -734,7 +754,7 @@ const AnnouncementsManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {announcements.map(announcement => (
+                  {filteredAnnouncements.map(announcement => (
                     <tr key={announcement.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
@@ -915,12 +935,25 @@ const AnnouncementsManagement = () => {
         ) : (
           <div className="text-center py-12">
             <Megaphone className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">Belum ada pengumuman</p>
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="mt-4 text-blue-500 hover:text-blue-600">
-              Buat pengumuman pertama
-            </button>
+            <p className="text-gray-500">
+              {searchTerm
+                ? 'Tidak ada pengumuman yang cocok dengan pencarian'
+                : 'Belum ada pengumuman'}
+            </p>
+            {!searchTerm && (
+              <button
+                onClick={() => setIsFormOpen(true)}
+                className="mt-4 text-blue-500 hover:text-blue-600">
+                Buat pengumuman pertama
+              </button>
+            )}
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="mt-4 text-blue-500 hover:text-blue-600">
+                Hapus filter pencarian
+              </button>
+            )}
           </div>
         )}
       </div>
