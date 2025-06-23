@@ -33,6 +33,7 @@ import {
   Users,
   AlertTriangle,
   X,
+  SquareArrowOutUpRight,
 } from 'lucide-react'
 import { formatLeaveDate } from '@/utils/dateConverter'
 
@@ -816,7 +817,7 @@ const AnnouncementsManagement = () => {
                             }
                             className="text-green-600 hover:text-green-900 p-1 rounded"
                             title="Lihat Detail">
-                            <Eye className="h-4 w-4" />
+                            <SquareArrowOutUpRight className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleEdit(announcement)}

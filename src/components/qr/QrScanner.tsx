@@ -39,7 +39,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
       const allowedDomains = [
         'localhost',
         '127.0.0.1',
-        '192.168.1.12', // Your local IP
+        '192.168.1.19', // Your local IP
         // Add other trusted domains
       ];
       
