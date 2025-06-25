@@ -44,24 +44,6 @@ const QrGenerator = () => {
   const qrCanvasRef = useRef<HTMLCanvasElement>(null)
   const qrImgRef = useRef<HTMLImageElement>(null)
 
-  // Update local settings when hook settings change
-  useEffect(() => {
-    setLocalSettings(settings)
-  }, [settings])
-
-  // Generate QR code with qrcode-with-logos library
-  useEffect(() => {
-    if (currentQrCode && qrCanvasRef.current) {
-      generateQrCodeImage()
-    }
-  }, [currentQrCode])
-
-  // Show message helper
-  const showMessage = (type: 'success' | 'error', text: string) => {
-    setMessage({ type, text })
-    setTimeout(() => setMessage(null), 5000)
-  }
-
   // Generate QR code image using qrcode-with-logos
   const generateQrCodeImage = async () => {
     if (!currentQrCode || !qrCanvasRef.current) return
@@ -164,6 +146,24 @@ const QrGenerator = () => {
       auto_regenerate_interval: 30,
     }
     setLocalSettings(defaultSettings)
+  }
+
+  // Update local settings when hook settings change
+  useEffect(() => {
+    setLocalSettings(settings)
+  }, [settings])
+
+  // Generate QR code with qrcode-with-logos library
+  useEffect(() => {
+    if (currentQrCode && qrCanvasRef.current) {
+      generateQrCodeImage()
+    }
+  }, [currentQrCode, generateQrCodeImage])
+
+  // Show message helper
+  const showMessage = (type: 'success' | 'error', text: string) => {
+    setMessage({ type, text })
+    setTimeout(() => setMessage(null), 5000)
   }
 
   if (!isAdmin) {
@@ -460,7 +460,7 @@ const QrGenerator = () => {
                   </h4>
                   <ol className="text-sm text-blue-700 space-y-1">
                     <li>1. Open the company app on your mobile device</li>
-                    <li>2. Tap on "Scan QR Code" or use the camera feature</li>
+                    <li>2. Tap on &quot;Scan QR Code&quot; or use the camera feature</li>
                     <li>3. Point your camera at this QR code</li>
                     <li>4. Your attendance will be recorded automatically</li>
                   </ol>
@@ -473,7 +473,7 @@ const QrGenerator = () => {
                   No QR Code Generated
                 </h3>
                 <p className="text-gray-500 mb-6">
-                  Click "Generate QR Code" to create a new attendance QR code
+                  Click &quot;Generate QR Code&quot; to create a new attendance QR code
                 </p>
 
                 <div className="bg-gray-50 rounded-lg p-4 text-left max-w-md mx-auto">

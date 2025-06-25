@@ -20,7 +20,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useLeaveRequests, useLeaveRequest, useLeaveRequestActions } from '@/hooks/leaveRequest';
-import { useLeaveQuota } from '@/hooks/leaveQuota';
+import { useMyLeaveQuota } from '@/hooks/leaveQuota'
 import { useAuth } from '@/hooks/auth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -64,7 +64,7 @@ const LeaveRequestsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const { leaveRequests, pagination, isLoading, mutate } = useLeaveRequests(filters);
-  const { leaveQuotaSummary, isLoading: quotaLoading } = useLeaveQuota();
+  const { leaveQuotaSummary, isLoading: quotaLoading } = useMyLeaveQuota();
   const { leaveRequest: selectedLeave, isLoading: detailLoading } = useLeaveRequest(selectedLeaveId);
   const { cancelLeaveRequest, getProofUrl } = useLeaveRequestActions();
 

@@ -5,12 +5,12 @@ export interface UserType {
   email: string
   name: string
   email_verified_at?: Date | string | null
-  created_at: Date | string
-  updated_at: Date | string
+  created_at?: Date | string
+  updated_at?: Date | string
   role: 'admin' | 'employee'
   position: string
   department_id: number
-  has_photo_profile: boolean
+  has_photo_profile?: boolean
   photo_profile_url?: string | null
   photo_profile_expires_at?: string | null
   department?: Department | null
