@@ -39,7 +39,8 @@ const QrScanner: React.FC<QrScannerProps> = ({
       const allowedDomains = [
         'localhost',
         '127.0.0.1',
-        '192.168.1.19', // Your local IP
+        '192.168.1.19',
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}` // Your local IP
         // Add other trusted domains
       ];
       
@@ -76,7 +77,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
         const url = new URL(scannedUrl);
         
         // If it's the same origin or trusted domain, use Next.js router
-        if (isSafeUrl(scannedUrl) && (url.hostname === window.location.hostname || url.hostname === '192.168.1.12')) {
+        if (isSafeUrl(scannedUrl) && (url.hostname === window.location.hostname || url.hostname === `${process.env.NEXT_PUBLIC_BACKEND_URL}`)) {
           // Extract the path and query for Next.js router
           const pathWithQuery = url.pathname + url.search + url.hash;
           router.push(pathWithQuery);

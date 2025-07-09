@@ -48,7 +48,7 @@ const QrResponse = () => {
     setProcessing(true)
 
     try {
-      const response = await fetch(`http://192.168.1.19:8000/api/attendance/qr/${token}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/attendance/qr/${token}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
