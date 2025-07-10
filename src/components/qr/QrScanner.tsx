@@ -1,6 +1,4 @@
 // src/components/qr/QrScanner.tsx
-// Note: You need to install @yudiel/react-qr-scanner: npm install @yudiel/react-qr-scanner
-
 'use client';
 
 import React, { useState } from 'react';
@@ -31,22 +29,58 @@ const QrScanner: React.FC<QrScannerProps> = ({
     }
   };
 
+  // Function to extract hostname from URL string
+  const extractHostname = (url: string): string => {
+    try {
+      // Remove protocol if present
+      const cleanUrl = url.replace(/^https?:\/\//, '');
+      // Remove path, query, and fragment
+      const hostname = cleanUrl.split('/')[0].split('?')[0].split('#')[0];
+      return hostname;
+    } catch {
+      return '';
+    }
+  };
+
   // Function to check if URL is safe to navigate to
   const isSafeUrl = (url: string): boolean => {
     try {
       const urlObj = new URL(url);
-      // Add your domain whitelist here if needed
-      const allowedDomains = [
-        'localhost',
-        '127.0.0.1',
-        '192.168.1.19',
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}` // Your local IP
-        // Add other trusted domains
-      ];
+      
+      // Get allowed domains from environment variable
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+      const allowedDomains = [];
+      
+      // Add backend domain if it exists
+      if (backendUrl) {
+        const backendHostname = extractHostname(backendUrl);
+        if (backendHostname) {
+          allowedDomains.push(backendHostname);
+        }
+      }
+      
+      // Add current domain
+      if (typeof window !== 'undefined') {
+        allowedDomains.push(window.location.hostname);
+      }
+      
+      // For development, allow localhost
+      if (process.env.NODE_ENV === 'development') {
+        allowedDomains.push('localhost', '127.0.0.1');
+      }
+      
+      console.log('Checking URL:', url);
+      console.log('URL hostname:', urlObj.hostname);
+      console.log('Allowed domains:', allowedDomains);
       
       const hostname = urlObj.hostname;
-      return allowedDomains.some(domain => hostname === domain || hostname.endsWith(`.${domain}`));
-    } catch {
+      
+      // Check if hostname matches any allowed domain
+      return allowedDomains.some(domain => {
+        return hostname === domain || hostname.endsWith(`.${domain}`);
+      });
+    } catch (error) {
+      console.error('Error checking URL safety:', error);
       return false;
     }
   };
@@ -58,12 +92,22 @@ const QrScanner: React.FC<QrScannerProps> = ({
       
       // Check if the scanned data is a URL
       if (isValidUrl(qrData)) {
-        if (isSafeUrl(qrData)) {
+        console.log('Valid URL detected, checking safety...');
+        
+        // For debugging: always show confirmation for URLs
+        // You can modify this logic based on your needs
+        if (true) { // Changed from isSafeUrl(qrData) to always show confirmation
+          console.log('Showing confirmation dialog');
           setScannedUrl(qrData);
           setShowConfirmation(true);
           setIsScanning(false);
+        } else {
+          console.log('URL not safe, rejecting');
+          setError('This URL is not allowed');
+          setIsScanning(false);
         }
       } else {
+        console.log('Not a URL, using original callback');
         // If it's not a URL, use the original callback
         onScanSuccess(qrData);
         handleClose();
@@ -76,14 +120,21 @@ const QrScanner: React.FC<QrScannerProps> = ({
       try {
         const url = new URL(scannedUrl);
         
-        // If it's the same origin or trusted domain, use Next.js router
-        if (isSafeUrl(scannedUrl) && (url.hostname === window.location.hostname || url.hostname === `${process.env.NEXT_PUBLIC_BACKEND_URL}`)) {
-          // Extract the path and query for Next.js router
-          const pathWithQuery = url.pathname + url.search + url.hash;
-          router.push(pathWithQuery);
+        // Check if it's a safe URL before navigating
+        if (isSafeUrl(scannedUrl)) {
+          // If it's the same origin, use Next.js router
+          if (url.hostname === window.location.hostname) {
+            const pathWithQuery = url.pathname + url.search + url.hash;
+            router.push(pathWithQuery);
+          } else {
+            // For external safe URLs, open in new tab
+            window.open(scannedUrl, '_blank', 'noopener,noreferrer');
+          }
         } else {
-          // For external URLs, open in new tab
-          window.open(scannedUrl, '_blank', 'noopener,noreferrer');
+          // For unsafe URLs, still allow user to open in new tab with warning
+          if (confirm('This URL is not from a trusted domain. Are you sure you want to open it?')) {
+            window.open(scannedUrl, '_blank', 'noopener,noreferrer');
+          }
         }
         
         onScanSuccess(scannedUrl);
@@ -133,6 +184,8 @@ const QrScanner: React.FC<QrScannerProps> = ({
 
   // Function to render the appropriate content based on current state
   const renderContent = () => {
+    console.log('Current state:', { error, showConfirmation, scannedUrl, isScanning });
+    
     if (error) {
       return (
         <div className="flex flex-col items-center justify-center py-12">
@@ -209,9 +262,9 @@ const QrScanner: React.FC<QrScannerProps> = ({
               <Scanner
                 onScan={handleScan}
                 onError={handleError}
-                formats={['qr_code']} // Focus only on QR codes
+                formats={['qr_code']}
                 constraints={{
-                  facingMode: 'environment', // Use back camera if available
+                  facingMode: 'environment',
                   width: { min: 640, ideal: 1280, max: 1920 },
                   height: { min: 480, ideal: 720, max: 1080 }
                 }}
@@ -231,7 +284,6 @@ const QrScanner: React.FC<QrScannerProps> = ({
                 components={{
                   finder: true,
                   tracker: (detectedCodes, ctx) => {
-                    // Custom tracker to highlight detected QR codes
                     detectedCodes.forEach((code) => {
                       const [first, second, third, fourth] = code.cornerPoints;
                       ctx.strokeStyle = '#00ff00';
