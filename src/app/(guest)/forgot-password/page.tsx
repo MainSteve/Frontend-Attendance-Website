@@ -110,7 +110,7 @@ const ForgotPasswordPage = () => {
               </h1>
               <p className="text-white/80 text-sm leading-relaxed">
                 Forgot your password? No problem. Just enter your email address
-                and we'll send you a password reset link.
+                and we&apos;ll send you a password reset link
               </p>
             </div>
           </div>
