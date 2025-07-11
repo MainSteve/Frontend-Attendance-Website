@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useUsers, useDepartments } from '@/hooks/users';
-import { UserType } from '@/types/User';
-import { Department } from '@/types/Department';
+import { UserType, EmployeeFormData } from '@/types/User';
 import { 
   Search, 
   Edit, 
   Trash2, 
-  Plus, 
-  User,
+  Plus,
   Loader2,
   AlertCircle,
   RefreshCw
@@ -43,16 +41,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface EmployeeFormData {
-  name: string;
-  email: string;
-  password?: string;
-  role: 'admin' | 'employee';
-  position: string;
-  department_id: string;
-  photo_profile?: File | null;
-}
-
 interface EmployeeListProps {
   onEmployeeClick?: (employee: UserType) => void;
 }
@@ -69,6 +57,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
   const [formError, setFormError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<EmployeeFormData>({
+    id: 0,
     name: '',
     email: '',
     password: '',
@@ -92,6 +81,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
   // Reset form data
   const resetForm = () => {
     setFormData({
+      id: 0,
       name: '',
       email: '',
       password: '',
@@ -113,6 +103,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
   const handleEdit = (employee: UserType) => {
     setSelectedEmployee(employee);
     setFormData({
+      id: employee.id,
       name: employee.name,
       email: employee.email,
       password: '',
@@ -138,6 +129,7 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
 
     try {
       const submitData = new FormData();
+      submitData.append('id', formData.id.toString());
       submitData.append('name', formData.name);
       submitData.append('email', formData.email);
       submitData.append('password', formData.password ?? '');
@@ -381,6 +373,17 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ onEmployeeClick }) => {
                 </Alert>
               )}
               
+              <div className="grid gap-2">
+                <Label htmlFor="id">ID</Label>
+                <Input
+                  id="id"
+                  type="number"
+                  value={formData.id}
+                  onChange={(e) => setFormData({ ...formData, id: Number(e.target.value) })}
+                  required
+                />
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="name">Nama</Label>
                 <Input

@@ -23,7 +23,7 @@ import AttendanceDetailsAdmin from '@/components/admin/AttendanceDetails'
 import { UserType } from '@/types/User'
 
 const AdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState('overview')
+  const [activeSection, setActiveSection] = useState('qr-generator')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedEmployee, setSelectedEmployee] = useState<UserType | null>(
     null,

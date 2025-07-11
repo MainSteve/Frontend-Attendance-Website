@@ -17,6 +17,7 @@ export interface UserType {
 }
 
 export interface EmployeeFormData {
+  id: number
   name: string
   email: string
   password?: string
