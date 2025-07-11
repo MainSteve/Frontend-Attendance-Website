@@ -71,7 +71,7 @@ const ClockStatusCard = () => {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6 w-full">
         <div className="flex items-center mb-4">
           <Clock className="h-5 w-5 text-blue-500 mr-2" />
           <h3 className="text-lg font-medium text-gray-800">

@@ -196,15 +196,20 @@ const EmployeeDashboard = () => {
         </div>
 
         {/* Top Section - Attendance Summary and Clock Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <AttendanceSummaryCard />
 
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <ClockStatusCard />
+
+          <LeaveQuotaCard />
+
         </div>
 
         {/* Middle Section - Leave Quota and Announcements */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <LeaveQuotaCard />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
 
           <AnnouncementsCard />
         </div>

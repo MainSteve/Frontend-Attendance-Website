@@ -9,11 +9,9 @@ import {
   XCircle,
   AlertCircle,
   FileText,
-  User,
   ChevronDown,
   Eye,
   X as XIcon,
-  Download,
   Loader2,
   ChevronLeft,
   ChevronRight,
@@ -40,17 +38,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Alert,
-  AlertDescription,
-} from '@/components/ui/alert';
 import { LeaveRequest, LeaveRequestFilters } from '@/types/LeaveRequest';
 import { formatLeaveDate } from '@/utils/dateConverter';
 
 const LeaveRequestsPage = () => {
-  const { user } = useAuth({});
   const router = useRouter();
   const [filters, setFilters] = useState<LeaveRequestFilters>({
     page: 1,
@@ -176,7 +168,7 @@ const LeaveRequestsPage = () => {
       {/* Quota Summary */}
       {leaveQuotaSummary && !quotaLoading && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">{leaveQuotaSummary.remaining}</div>
               <div className="text-sm text-gray-600">Sisa Kuota</div>
@@ -186,7 +178,7 @@ const LeaveRequestsPage = () => {
               <div className="text-sm text-gray-600">Total Kuota</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-orange-600">
+              <div className="text-3xl font-bold text-orange-400">
                 {leaveRequests.filter(req => req.status === 'pending').length}
               </div>
               <div className="text-sm text-gray-600">Menunggu</div>
@@ -305,7 +297,7 @@ const LeaveRequestsPage = () => {
               <div key={request.id} className="bg-white rounded-lg shadow border border-gray-200 p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
+                    <div className="flex items-center mb-3 grid grid-cols-2 grid-rows-2 gap-3 md:grid-cols-4 md:grid-rows-1">
                       {getTypeBadge(request.type)}
                       {getStatusBadge(request.status)}
                       {request.has_proofs && (
